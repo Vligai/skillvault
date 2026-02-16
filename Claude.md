@@ -61,11 +61,13 @@ Use these guidelines whenever you write, review, or refactor code. Prioritize se
 - Prefer standard libraries over custom implementations.
 - Use strong algorithms: AES-256-GCM, ChaCha20-Poly1305, SHA-256/384, Argon2/bcrypt.
 - Avoid: MD5, SHA1 for security, DES, ECB mode, custom crypto.
-- Use TLS 1.2+ for transport; avoid SSLv3, TLS 1.0/1.1.
+- Use TLS 1.3 preferred; minimum TLS 1.2 for transport. Avoid SSLv3, TLS 1.0/1.1.
 
 ---
 
 ## OWASP Top 10 Checklist
+
+*Based on OWASP Top 10 2021. Newer versions (2024+) add categories such as Automated Threats, API consumption—review [owasp.org/Top10](https://owasp.org/Top10) for latest.*
 
 When writing or reviewing code, consider:
 
@@ -116,7 +118,7 @@ When writing or reviewing code, consider:
 **Never suggest or generate:**
 
 - Hardcoded credentials, API keys, or tokens
-- `eval()` or equivalent with user-controlled input
+- `eval()` or equivalent with user-controlled input; `dangerouslySetInnerHTML` / `innerHTML` with untrusted content
 - Disabling security features without explicit justification
 - SQL/command string concatenation with user input
 - Weak crypto (MD5, DES, ECB)

@@ -7,6 +7,8 @@ description: Enforce secure coding practices, prevent common vulnerabilities, an
 
 Apply these rules when generating, editing, or reviewing code. Security is a first-class constraint on all suggestions.
 
+*Content aligned with [Claude.md](Claude.md); tailored for Cursor rules format.*
+
 ---
 
 ## Principles
@@ -64,11 +66,13 @@ Apply these rules when generating, editing, or reviewing code. Security is a fir
 - Prefer standard libraries; avoid custom crypto.
 - Use strong algorithms: AES-256-GCM, Argon2/bcrypt, SHA-256.
 - Avoid: MD5, SHA1, DES, ECB.
-- TLS 1.2+ only; no SSLv3, TLS 1.0/1.1.
+- TLS 1.3 preferred; minimum 1.2. No SSLv3, TLS 1.0/1.1.
 
 ---
 
 ## OWASP Top 10 Checklist
+
+*OWASP Top 10 2021 base. See [owasp.org/Top10](https://owasp.org/Top10) for 2024+ updates (e.g. Automated Threats, API consumption).*
 
 1. **A01 Access Control** — Every sensitive action authorized?
 2. **A02 Crypto** — Data and secrets protected at rest and in transit?

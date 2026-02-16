@@ -4,6 +4,19 @@ Mapping skills that different personas can use with AI agents (Claude, Cursor, C
 
 ---
 
+## Table of Contents
+
+- [Persona 1: Security Professional / Pentester](#persona-1-security-professional--pentester)
+- [Persona 2: Software Developer](#persona-2-software-developer)
+- [Persona 3: Regular User / Non-Technical Person](#persona-3-regular-user--non-technical-person)
+- [Persona 4: Team Lead / Engineering Manager](#persona-4-team-lead--engineering-manager)
+- [Persona 5: Cloud / Infrastructure Engineer](#persona-5-cloud--infrastructure-engineer)
+- [Cross-Cutting Skill Ideas](#cross-cutting-skill-ideas)
+- [Prioritization Criteria](#prioritization-criteria)
+- [Next Steps](#next-steps)
+
+---
+
 ## Persona 1: Security Professional / Pentester
 
 ### Offensive Skills
@@ -136,4 +149,4 @@ When deciding which skills to build first, consider:
 - [ ] Define input/output format for each skill (what does the user provide, what does the agent return?)
 - [ ] Build prototype prompts for highest-priority skills
 - [ ] Test against real-world scenarios and edge cases
-- [ ] Package as reusable CLAUDE.md instructions or project-level skill files
+- [ ] Package as reusable Claude.md instructions or project-level skill files

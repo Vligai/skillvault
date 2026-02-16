@@ -1,5 +1,7 @@
 # SkillVault
 
+*Security guardrails for AI coding agents.*
+
 A collection of security skills for AI coding agents: Claude, Cursor, and other major platforms.
 
 These skills guide agents to follow secure coding practices, prevent common vulnerabilities (OWASP Top 10), and avoid security anti-patterns.
@@ -12,6 +14,8 @@ These skills guide agents to follow secure coding practices, prevent common vuln
 |----------|------|------------|
 | **Claude** (Anthropic) | [Claude.md](Claude.md) | Add to Claude projects, custom instructions, or prompt library |
 | **Cursor** | [Cursor.md](Cursor.md) | Add to `.cursor/rules/`, `.cursorrules`, or adapt as a Cursor skill |
+
+See [ideation.md](ideation.md) for the roadmap and planned skills by persona.
 
 ---
 
@@ -36,4 +40,4 @@ Contributions welcome. Keep skills concise, actionable, and platform-appropriate
 
 ## License
 
-MIT
+[MIT](LICENSE)
