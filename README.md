@@ -1,5 +1,10 @@
 # SkillVault
 
+[![CI](https://github.com/vlad-terin/skillvault/actions/workflows/ci.yml/badge.svg)](https://github.com/vlad-terin/skillvault/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node 18+](https://img.shields.io/badge/node-18+-blue.svg)](https://nodejs.org/)
+[![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
+
 *Security skills for AI coding agents.*
 
 A collection of security skills for AI coding agents: Claude, Cursor, and other major platforms. These skills guide agents to follow secure coding practices, prevent common vulnerabilities (OWASP Top 10), and avoid security anti-patterns.
@@ -82,12 +87,28 @@ Specialized security skill prompts organized by persona. Each skill is a standal
 
 ---
 
+## Testing
+
+Tests use the Node.js built-in test runner (`node:test` + `node:assert`) — zero dependencies required.
+
+```bash
+npm test
+```
+
+Tests run automatically on every push and PR via GitHub Actions across Node 18, 20, and 22.
+
+---
+
 ## Project Structure
 
 ```
 skillvault/
 ├── Claude.md                  # General security guardrails (Claude)
 ├── Cursor.md                  # General security guardrails (Cursor)
+├── bin/cli.js                 # CLI entry point
+├── lib/installer.js           # Core install logic (testable)
+├── test/cli.test.js           # Unit tests
+├── .github/workflows/ci.yml   # CI pipeline
 ├── ideation.md                # Roadmap and planned skills by persona
 ├── README.md
 └── skills/
