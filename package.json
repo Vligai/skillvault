@@ -1,0 +1,29 @@
+{
+  "name": "skillvault",
+  "version": "0.1.0",
+  "description": "Security skills for AI coding agents — Claude, Cursor, and more",
+  "bin": {
+    "skillvault": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    ".claude/commands/",
+    "Claude.md",
+    "Cursor.md"
+  ],
+  "keywords": [
+    "security",
+    "claude",
+    "cursor",
+    "ai",
+    "coding-agent",
+    "owasp",
+    "skills"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vlad-terin/skillvault"
+  }
+}

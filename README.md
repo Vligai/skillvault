@@ -6,6 +6,37 @@ A collection of security skills for AI coding agents: Claude, Cursor, and other 
 
 ---
 
+## Installation
+
+The fastest way to add security skills to your project:
+
+```bash
+npx skillvault init
+```
+
+This will detect your platform (Claude Code or Cursor), let you pick which skills to install, and copy the files into your project.
+
+### Options
+
+```bash
+npx skillvault init --all          # Install everything, no prompts
+npx skillvault init --claude       # Target Claude Code only
+npx skillvault init --cursor       # Target Cursor only
+npx skillvault init --no-guardrails  # Skip guardrail files
+```
+
+### Manual installation
+
+Clone the repo and copy the files you need:
+
+```bash
+git clone https://github.com/vlad-terin/skillvault.git
+cp -r skillvault/.claude/commands/ your-project/.claude/commands/
+cp skillvault/Claude.md your-project/CLAUDE.md
+```
+
+---
+
 ## Security Guardrails
 
 | Platform | File | How to Use |
