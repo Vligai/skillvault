@@ -119,7 +119,62 @@ skillvault/
         └── user/              # Non-technical user skills
 ```
 
-See [ideation.md](ideation.md) for the full roadmap and 40+ planned skills across 5 personas.
+See [ideation.md](ideation.md) for the full skill ideation map with 40+ planned skills across 5 personas.
+
+---
+
+## Roadmap
+
+### More Platforms
+
+SkillVault currently supports Claude Code and Cursor. Planned:
+
+| Platform | Config location | Status |
+|----------|----------------|--------|
+| **Claude Code** | `.claude/commands/` + `CLAUDE.md` | Shipped |
+| **Cursor** | `.cursor/rules/` | Shipped |
+| **Windsurf** | `.windsurfrules` | Planned |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Planned |
+| **Cline** | `.clinerules` | Planned |
+| **Aider** | `.aider.conf.yml` conventions | Planned |
+| **Generic** | `.rules/` (flat markdown) | Planned |
+
+Auto-detection will expand — `skillvault init` will detect any of these and offer the right installer.
+
+### CLI Improvements
+
+| Feature | Description |
+|---------|-------------|
+| `skillvault update` | Re-copy skills to pick up new versions without losing custom CLAUDE.md content |
+| `skillvault list` | Show installed skills and available updates |
+| `skillvault remove` | Uninstall selected skills cleanly |
+| `--category <name>` | Filter by category: `--category developer`, `--category security` |
+| `.skillvaultrc` config | Project-level config file to pin skill selections, platform, guardrail preferences — so `skillvault init` is reproducible across team members |
+| `--dry-run` | Preview what would be installed without writing files |
+| `--json` | Machine-readable output for CI/scripting |
+
+### Community & Ecosystem
+
+| Feature | Description |
+|---------|-------------|
+| **Skill authoring template** | `skillvault create-skill` scaffolds a new skill with the standard sections (Input, Output, Instructions, Examples, Edge Cases) |
+| **Custom skill directories** | Point to a local folder or git repo of custom skills via `.skillvaultrc` |
+| **Composable skill packs** | Publish themed skill bundles as npm packages (`@skillvault/devsecops`, `@skillvault/cloud`) that plug into the CLI |
+| **Severity profiles** | `--profile strict` vs `--profile standard` — strict adds extra guardrails, blocks more patterns |
+| **Team sharing** | `skillvault export` / `skillvault import` to share curated skill sets as portable JSON configs |
+
+### Next Skills (from [ideation.md](ideation.md))
+
+| Skill | Persona | Priority |
+|-------|---------|----------|
+| Auth Flow Scaffolder | Developer | High |
+| Dockerfile Security Linter | Developer | High |
+| Detection Rule Generator (Sigma/SPL/KQL) | Security | High |
+| IaC Scanner (Terraform/CloudFormation) | Cloud | High |
+| SBOM Generator | Developer | Medium |
+| CVE Analyzer | Security | Medium |
+| Secure API Design Reviewer | Developer | Medium |
+| PR Security Review Checklist | Team Lead | Medium |
 
 ---
 
