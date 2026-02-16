@@ -143,10 +143,29 @@ When deciding which skills to build first, consider:
 
 ---
 
+## Prioritized Top 10 Skills
+
+Ranked by frequency x impact x automation potential x persona reach x gap in existing tools:
+
+| # | Skill | Persona(s) | File |
+|---|-------|-----------|------|
+| 1 | **Code Security Reviewer** | Developer, Security | [skills/claude/developer/code-security-reviewer.md](skills/claude/developer/code-security-reviewer.md) |
+| 2 | **Threat Model Generator** | Security, Lead, Developer | [skills/claude/security/threat-model-generator.md](skills/claude/security/threat-model-generator.md) |
+| 3 | **Secret Scanner** | Developer, DevSecOps | [skills/claude/developer/secret-scanner.md](skills/claude/developer/secret-scanner.md) |
+| 4 | **Dependency Auditor** | Developer | [skills/claude/developer/dependency-auditor.md](skills/claude/developer/dependency-auditor.md) |
+| 5 | **Input Validation Generator** | Developer | [skills/claude/developer/input-validation-generator.md](skills/claude/developer/input-validation-generator.md) |
+| 6 | **CI/CD Security Hardener** | Developer, Cloud/Infra | [skills/claude/developer/cicd-security-hardener.md](skills/claude/developer/cicd-security-hardener.md) |
+| 7 | **IAM Policy Analyzer** | Cloud/Infra, Security | [skills/claude/cloud/iam-policy-analyzer.md](skills/claude/cloud/iam-policy-analyzer.md) |
+| 8 | **Incident Response Playbook Builder** | Security, Lead | [skills/claude/security/incident-response-playbook-builder.md](skills/claude/security/incident-response-playbook-builder.md) |
+| 9 | **Phishing Email Analyzer** | Regular User | [skills/claude/user/phishing-email-analyzer.md](skills/claude/user/phishing-email-analyzer.md) |
+| 10 | **Hardening Checklist Generator** | Security, Cloud/Infra | [skills/claude/security/hardening-checklist-generator.md](skills/claude/security/hardening-checklist-generator.md) |
+
+---
+
 ## Next Steps
 
-- [ ] Prioritize top 10 skills across personas
-- [ ] Define input/output format for each skill (what does the user provide, what does the agent return?)
-- [ ] Build prototype prompts for highest-priority skills
+- [x] Prioritize top 10 skills across personas
+- [x] Define input/output format for each skill (what does the user provide, what does the agent return?)
+- [x] Build prototype prompts for highest-priority skills
 - [ ] Test against real-world scenarios and edge cases
 - [ ] Package as reusable Claude.md instructions or project-level skill files
