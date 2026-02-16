@@ -19,3 +19,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm test
       - run: node bin/cli.js init --all --claude
+      - run: node bin/cli.js list --json
+      - run: node bin/cli.js update --dry-run
+      - run: node bin/cli.js remove --all
+      - run: node bin/cli.js init --all --claude --category developer --dry-run --json

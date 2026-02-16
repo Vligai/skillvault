@@ -21,13 +21,40 @@ npx skillvault init
 
 This will detect your platform (Claude Code or Cursor), let you pick which skills to install, and copy the files into your project.
 
+### Commands
+
+```bash
+npx skillvault init       # Install skills (interactive)
+npx skillvault list       # Show installed and available skills
+npx skillvault update     # Re-copy installed skills (pick up new versions)
+npx skillvault remove     # Uninstall selected skills
+```
+
 ### Options
 
 ```bash
-npx skillvault init --all          # Install everything, no prompts
-npx skillvault init --claude       # Target Claude Code only
-npx skillvault init --cursor       # Target Cursor only
-npx skillvault init --no-guardrails  # Skip guardrail files
+npx skillvault init --all              # Install everything, no prompts
+npx skillvault init --claude           # Target Claude Code only
+npx skillvault init --cursor           # Target Cursor only
+npx skillvault init --no-guardrails    # Skip guardrail files
+npx skillvault init --category developer  # Filter by category (repeatable)
+npx skillvault init --dry-run          # Preview without writing files
+npx skillvault init --json             # Machine-readable JSON output
+npx skillvault init --save             # Save selections to .skillvaultrc
+npx skillvault remove --all            # Remove all installed skills
+npx skillvault update --category security # Update only security skills
+```
+
+### `.skillvaultrc` config
+
+Save your selections with `--save` so `skillvault init` is reproducible across team members:
+
+```json
+{
+  "skills": ["review", "scan-secrets"],
+  "platform": "claude",
+  "includeGuardrails": true
+}
 ```
 
 ### Manual installation
@@ -143,15 +170,15 @@ Auto-detection will expand — `skillvault init` will detect any of these and of
 
 ### CLI Improvements
 
-| Feature | Description |
-|---------|-------------|
-| `skillvault update` | Re-copy skills to pick up new versions without losing custom CLAUDE.md content |
-| `skillvault list` | Show installed skills and available updates |
-| `skillvault remove` | Uninstall selected skills cleanly |
-| `--category <name>` | Filter by category: `--category developer`, `--category security` |
-| `.skillvaultrc` config | Project-level config file to pin skill selections, platform, guardrail preferences — so `skillvault init` is reproducible across team members |
-| `--dry-run` | Preview what would be installed without writing files |
-| `--json` | Machine-readable output for CI/scripting |
+| Feature | Description | Status |
+|---------|-------------|--------|
+| `skillvault list` | Show installed and available skills | Shipped |
+| `skillvault update` | Re-copy skills to pick up new versions | Shipped |
+| `skillvault remove` | Uninstall selected skills cleanly | Shipped |
+| `--category <name>` | Filter by category (repeatable) | Shipped |
+| `.skillvaultrc` config | Project-level config for reproducible installs | Shipped |
+| `--dry-run` | Preview without writing files | Shipped |
+| `--json` | Machine-readable output for CI/scripting | Shipped |
 
 ### Community & Ecosystem
 
