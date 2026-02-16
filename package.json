@@ -5,8 +5,12 @@
   "bin": {
     "skillvault": "bin/cli.js"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "files": [
     "bin/",
+    "lib/",
     "skills/",
     ".claude/commands/",
     "Claude.md",
