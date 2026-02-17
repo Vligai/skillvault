@@ -10,6 +10,8 @@ const {
   SKILLS,
   PLATFORMS,
   PKG_ROOT,
+  getVersion,
+  doctor,
   skillSourcePath,
   commandSourcePath,
   guardrailsContent,
@@ -591,5 +593,77 @@ describe(".skillvaultrc integration", () => {
     const config = { platform: "invalid" };
     fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
     assert.throws(() => readConfig(tmpDir), /platform must be one of/);
+  });
+});
+
+describe("getVersion", () => {
+  it("returns a semver string", () => {
+    const version = getVersion();
+    assert.match(version, /^\d+\.\d+\.\d+/);
+  });
+});
+
+describe("doctor", () => {
+  it("returns correct structure with empty dir", () => {
+    const result = doctor(tmpDir);
+    assert.equal(typeof result.version, "string");
+    assert.match(result.version, /^\d+\.\d+\.\d+/);
+    assert.equal(typeof result.platforms, "object");
+    assert.equal(result.config, null);
+    assert.equal(result.totalInstalled, 0);
+
+    for (const platform of PLATFORMS) {
+      const info = result.platforms[platform.key];
+      assert.equal(info.detected, false);
+      assert.equal(info.skillCount, 0);
+      assert.equal(info.guardrails, false);
+    }
+  });
+
+  it("detects installed skills per platform", () => {
+    installClaude(SKILLS, false, tmpDir);
+    installPlatform("cursor", SKILLS.slice(0, 3), false, tmpDir);
+
+    const result = doctor(tmpDir);
+    assert.equal(result.platforms.claude.skillCount, 10);
+    assert.equal(result.platforms.cursor.skillCount, 3);
+    assert.equal(result.totalInstalled, 13);
+  });
+
+  it("detects guardrails for claude", () => {
+    installClaude(SKILLS, true, tmpDir);
+    const result = doctor(tmpDir);
+    assert.equal(result.platforms.claude.guardrails, true);
+  });
+
+  it("detects guardrails for rules-dir platforms", () => {
+    installPlatform("cursor", SKILLS, true, tmpDir);
+    const result = doctor(tmpDir);
+    assert.equal(result.platforms.cursor.guardrails, true);
+  });
+
+  it("detects guardrails for append-target platforms", () => {
+    installPlatform("codex", SKILLS, true, tmpDir);
+    const result = doctor(tmpDir);
+    assert.equal(result.platforms.codex.guardrails, true);
+  });
+
+  it("reads config when present", () => {
+    const config = { skills: ["review"], platform: "claude" };
+    fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+
+    const result = doctor(tmpDir);
+    assert.ok(result.config);
+    assert.deepEqual(result.config.skills, ["review"]);
+  });
+
+  it("detects platform directories", () => {
+    fs.mkdirSync(path.join(tmpDir, ".claude"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, ".cursor"), { recursive: true });
+
+    const result = doctor(tmpDir);
+    assert.equal(result.platforms.claude.detected, true);
+    assert.equal(result.platforms.cursor.detected, true);
+    assert.equal(result.platforms.windsurf.detected, false);
   });
 });
