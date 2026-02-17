@@ -7,7 +7,7 @@
 
 *Security skills for AI coding agents.*
 
-A collection of security skills for AI coding agents: Claude, Cursor, and other major platforms. These skills guide agents to follow secure coding practices, prevent common vulnerabilities (OWASP Top 10), and avoid security anti-patterns.
+A collection of security skills for AI coding agents: Claude Code, Cursor, Copilot, Windsurf, Cline, Codex, and other major platforms. These skills guide agents to follow secure coding practices, prevent common vulnerabilities (OWASP Top 10), and avoid security anti-patterns.
 
 ---
 
@@ -163,7 +163,15 @@ SkillVault currently supports Claude Code and Cursor. Planned:
 | **Windsurf** | `.windsurfrules` | Planned |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Planned |
 | **Cline** | `.clinerules` | Planned |
+| **Roo Code** | `.roo/rules/` | Planned |
+| **Continue** | `.continue/config.yaml` rules | Planned |
+| **Codex CLI** | `AGENTS.md` | Planned |
+| **Amazon Q Developer** | `.q/rules/` | Planned |
+| **Sourcegraph Cody** | `.cody/cody.json` instructions | Planned |
+| **JetBrains AI** | `.junie/guidelines.md` | Planned |
+| **Tabnine** | `.tabnine/` config | Planned |
 | **Aider** | `.aider.conf.yml` conventions | Planned |
+| **Augment Code** | `augment-guidelines.md` | Planned |
 | **Generic** | `.rules/` (flat markdown) | Planned |
 
 Auto-detection will expand — `skillvault init` will detect any of these and offer the right installer.
