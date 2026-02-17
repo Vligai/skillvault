@@ -5,14 +5,14 @@
 const readline = require("readline");
 const {
   SKILLS,
+  PLATFORMS,
   detectPlatforms,
   filterByCategory,
   listSkills,
   removeSkills,
   readConfig,
   writeConfig,
-  installClaude,
-  installCursor,
+  installPlatform,
 } = require("../lib/installer");
 
 const CWD = process.cwd();
@@ -23,14 +23,18 @@ function parseArgs(args) {
   const result = {
     command: null,
     flagAll: false,
-    flagClaude: false,
-    flagCursor: false,
     flagNoGuardrails: false,
     flagDryRun: false,
     flagJson: false,
     flagSave: false,
     categories: [],
+    platforms: {}, // e.g. { claude: true, cursor: true }
   };
+
+  // Initialize all platform flags to false
+  for (const p of PLATFORMS) {
+    result.platforms[p.key] = false;
+  }
 
   let i = 0;
   if (args.length > 0 && !args[0].startsWith("-")) {
@@ -38,11 +42,11 @@ function parseArgs(args) {
     i = 1;
   }
 
+  const platformFlags = new Set(PLATFORMS.map((p) => `--${p.flag}`));
+
   while (i < args.length) {
     const arg = args[i];
     if (arg === "--all") result.flagAll = true;
-    else if (arg === "--claude") result.flagClaude = true;
-    else if (arg === "--cursor") result.flagCursor = true;
     else if (arg === "--no-guardrails") result.flagNoGuardrails = true;
     else if (arg === "--dry-run") result.flagDryRun = true;
     else if (arg === "--json") result.flagJson = true;
@@ -50,11 +54,24 @@ function parseArgs(args) {
     else if (arg === "--category" && i + 1 < args.length) {
       i++;
       result.categories.push(args[i]);
+    } else if (platformFlags.has(arg)) {
+      const flag = arg.slice(2); // remove --
+      const platform = PLATFORMS.find((p) => p.flag === flag);
+      if (platform) result.platforms[platform.key] = true;
     }
     i++;
   }
 
   return result;
+}
+
+// Backward-compatible helpers
+function hasPlatformFlags(flags) {
+  return Object.values(flags.platforms).some(Boolean);
+}
+
+function getSelectedPlatformKeys(flags) {
+  return Object.entries(flags.platforms).filter(([, v]) => v).map(([k]) => k);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -81,20 +98,40 @@ async function ask(rl, question) {
 }
 
 async function askPlatform(rl) {
-  console.log("  No .claude/ or .cursor/ directory detected.\n");
+  console.log("  No platform detected.\n");
   console.log("  Which platform are you using?\n");
-  console.log("    1) Claude Code");
-  console.log("    2) Cursor");
-  console.log("    3) Both");
+
+  for (let i = 0; i < PLATFORMS.length; i++) {
+    const num = String(i + 1).padStart(2, " ");
+    console.log(`   ${num}) ${PLATFORMS[i].name}`);
+  }
+  console.log("");
+  console.log("  Enter one or more numbers separated by commas (e.g. 1,2):");
   console.log("");
 
   while (true) {
-    const answer = await ask(rl, "  Enter choice [1/2/3]: ");
-    const n = answer.trim();
-    if (n === "1") return { claude: true, cursor: false };
-    if (n === "2") return { claude: false, cursor: true };
-    if (n === "3") return { claude: true, cursor: true };
-    console.log("  Please enter 1, 2, or 3.");
+    const answer = await ask(rl, "  Choice: ");
+    const parts = answer.trim().split(",").map((s) => s.trim());
+    const keys = [];
+    let valid = true;
+
+    for (const part of parts) {
+      const n = parseInt(part, 10);
+      if (n >= 1 && n <= PLATFORMS.length) {
+        keys.push(PLATFORMS[n - 1].key);
+      } else {
+        valid = false;
+        break;
+      }
+    }
+
+    if (valid && keys.length > 0) {
+      const result = {};
+      for (const p of PLATFORMS) result[p.key] = false;
+      for (const k of keys) result[k] = true;
+      return result;
+    }
+    console.log(`  Please enter numbers 1-${PLATFORMS.length} separated by commas.`);
   }
 }
 
@@ -196,7 +233,7 @@ async function askRemoveSkills(rl, installed) {
 }
 
 async function askGuardrails(rl) {
-  const answer = await ask(rl, "  Include security guardrails (CLAUDE.md / Cursor.md)? [Y/n]: ");
+  const answer = await ask(rl, "  Include security guardrails? [Y/n]: ");
   return answer.trim().toLowerCase() !== "n";
 }
 
@@ -237,11 +274,14 @@ async function cmdList(flags) {
     console.log(`  ${cat.charAt(0).toUpperCase() + cat.slice(1)}:`);
     const catSkills = skills.filter((s) => s.category === cat);
     for (const s of catSkills) {
-      const installed = s.installedClaude || s.installedCursor;
-      const status = installed ? "[installed]" : "[available]";
       const platforms = [];
       if (s.installedClaude) platforms.push("claude");
-      if (s.installedCursor) platforms.push("cursor");
+      for (const p of PLATFORMS) {
+        if (p.type === "claude-commands") continue;
+        if (s["installed_" + p.key]) platforms.push(p.key);
+      }
+      const installed = platforms.length > 0;
+      const status = installed ? "[installed]" : "[available]";
       const platformStr = platforms.length > 0 ? ` (${platforms.join(", ")})` : "";
       console.log(`    ${status} ${s.name}${platformStr}`);
     }
@@ -265,52 +305,66 @@ async function cmdInit(flags) {
     availableSkills = filterByCategory(SKILLS, flags.categories);
   }
 
-  let platforms;
+  let selectedPlatforms; // object: { claude: true, cursor: false, ... }
   let selectedSkills;
   let includeGuardrails;
 
-  if (flags.flagClaude || flags.flagCursor) {
-    platforms = { claude: flags.flagClaude, cursor: flags.flagCursor };
+  if (hasPlatformFlags(flags)) {
+    selectedPlatforms = { ...flags.platforms };
   } else if (config && config.platform) {
-    const p = config.platform;
-    platforms = { claude: p === "claude" || p === "both", cursor: p === "cursor" || p === "both" };
+    selectedPlatforms = {};
+    for (const p of PLATFORMS) selectedPlatforms[p.key] = false;
+
+    if (config.platform === "both") {
+      selectedPlatforms.claude = true;
+      selectedPlatforms.cursor = true;
+    } else if (Array.isArray(config.platform)) {
+      for (const k of config.platform) selectedPlatforms[k] = true;
+    } else {
+      selectedPlatforms[config.platform] = true;
+    }
+
     if (!flags.flagJson) {
-      const names = [platforms.claude && "Claude Code", platforms.cursor && "Cursor"].filter(Boolean).join(" + ");
+      const names = PLATFORMS.filter((p) => selectedPlatforms[p.key]).map((p) => p.name).join(" + ");
       console.log(`  Platform from config: ${names}\n`);
     }
   } else {
     const detected = detectPlatforms(CWD);
-    if (detected.hasClaude || detected.hasCursor) {
-      platforms = { claude: detected.hasClaude, cursor: detected.hasCursor };
+    const anyDetected = Object.values(detected).some(Boolean);
+    if (anyDetected) {
+      selectedPlatforms = detected;
       if (!flags.flagJson) {
-        const names = [detected.hasClaude && "Claude Code", detected.hasCursor && "Cursor"].filter(Boolean).join(" + ");
+        const names = PLATFORMS.filter((p) => detected[p.key]).map((p) => p.name).join(" + ");
         console.log(`  Detected platform: ${names}\n`);
       }
     } else {
-      platforms = null;
+      selectedPlatforms = null;
     }
   }
 
   if (flags.flagAll) {
     selectedSkills = availableSkills;
     includeGuardrails = !flags.flagNoGuardrails;
-    if (!platforms) {
-      platforms = { claude: true, cursor: false };
+    if (!selectedPlatforms) {
+      selectedPlatforms = {};
+      for (const p of PLATFORMS) selectedPlatforms[p.key] = false;
+      selectedPlatforms.claude = true;
       if (!flags.flagJson) console.log("  No platform detected — defaulting to Claude Code with --all.\n");
     }
   } else if (config && config.skills && !flags.categories.length) {
-    // Use config skills as defaults in non-interactive mode
     const slugSet = new Set(config.skills);
     selectedSkills = availableSkills.filter((s) => slugSet.has(s.slug));
     includeGuardrails = flags.flagNoGuardrails ? false : (config.includeGuardrails !== false);
-    if (!platforms) {
-      platforms = { claude: true, cursor: false };
+    if (!selectedPlatforms) {
+      selectedPlatforms = {};
+      for (const p of PLATFORMS) selectedPlatforms[p.key] = false;
+      selectedPlatforms.claude = true;
     }
   } else {
     const rl = createRL();
     try {
-      if (!platforms) {
-        platforms = await askPlatform(rl);
+      if (!selectedPlatforms) {
+        selectedPlatforms = await askPlatform(rl);
         console.log("");
       }
       selectedSkills = await askSkills(rl, availableSkills);
@@ -320,27 +374,23 @@ async function cmdInit(flags) {
     }
   }
 
-  const p = prefix(flags);
   const allCopied = [];
 
-  if (platforms.claude) {
-    const files = installClaude(selectedSkills, includeGuardrails, CWD, flags.flagDryRun);
-    allCopied.push(...files);
-  }
-
-  if (platforms.cursor) {
-    const files = installCursor(selectedSkills, includeGuardrails, CWD, flags.flagDryRun);
-    allCopied.push(...files);
+  for (const platform of PLATFORMS) {
+    if (selectedPlatforms[platform.key]) {
+      const files = installPlatform(platform.key, selectedSkills, includeGuardrails, CWD, flags.flagDryRun);
+      allCopied.push(...files);
+    }
   }
 
   if (flags.flagSave && !flags.flagDryRun) {
-    const platformStr = platforms.claude && platforms.cursor ? "both" : platforms.claude ? "claude" : "cursor";
+    const activeKeys = PLATFORMS.filter((p) => selectedPlatforms[p.key]).map((p) => p.key);
     const cfg = {
       skills: selectedSkills.map((s) => s.slug),
-      platform: platformStr,
+      platform: activeKeys.length === 1 ? activeKeys[0] : activeKeys,
       includeGuardrails: includeGuardrails,
     };
-    const cfgPath = writeConfig(cfg, CWD);
+    writeConfig(cfg, CWD);
     allCopied.push(".skillvaultrc");
   }
 
@@ -356,7 +406,16 @@ async function cmdUpdate(flags) {
   if (!flags.flagJson) banner();
 
   const skills = listSkills(CWD);
-  let installed = skills.filter((s) => s.installedClaude || s.installedCursor);
+
+  // A skill is installed if it's on any platform
+  let installed = skills.filter((s) => {
+    if (s.installedClaude) return true;
+    for (const p of PLATFORMS) {
+      if (p.type === "claude-commands") continue;
+      if (s["installed_" + p.key]) return true;
+    }
+    return false;
+  });
 
   if (flags.categories.length > 0) {
     installed = installed.filter((s) => {
@@ -374,24 +433,36 @@ async function cmdUpdate(flags) {
     return;
   }
 
-  // Map back to full SKILLS objects
   const slugSet = new Set(installed.map((s) => s.slug));
   const selectedSkills = SKILLS.filter((s) => slugSet.has(s.slug));
 
   const allCopied = [];
 
-  // Detect which platforms have installed skills
-  const hasClaude = flags.flagClaude || installed.some((s) => s.installedClaude);
-  const hasCursor = flags.flagCursor || installed.some((s) => s.installedCursor);
+  // Determine which platforms to update
+  if (hasPlatformFlags(flags)) {
+    // Only update the platforms explicitly specified
+    for (const platform of PLATFORMS) {
+      if (flags.platforms[platform.key]) {
+        const files = installPlatform(platform.key, selectedSkills, false, CWD, flags.flagDryRun);
+        allCopied.push(...files);
+      }
+    }
+  } else {
+    // Update all platforms where skills are installed
+    const hasClaude = installed.some((s) => s.installedClaude);
+    if (hasClaude) {
+      const files = installPlatform("claude", selectedSkills, false, CWD, flags.flagDryRun);
+      allCopied.push(...files);
+    }
 
-  if (hasClaude && !flags.flagCursor) {
-    const files = installClaude(selectedSkills, false, CWD, flags.flagDryRun);
-    allCopied.push(...files);
-  }
-
-  if (hasCursor && !flags.flagClaude) {
-    const files = installCursor(selectedSkills, false, CWD, flags.flagDryRun);
-    allCopied.push(...files);
+    for (const platform of PLATFORMS) {
+      if (platform.type === "claude-commands") continue;
+      const hasSkills = installed.some((s) => s["installed_" + platform.key]);
+      if (hasSkills) {
+        const files = installPlatform(platform.key, selectedSkills, false, CWD, flags.flagDryRun);
+        allCopied.push(...files);
+      }
+    }
   }
 
   if (flags.flagJson) {
@@ -406,7 +477,14 @@ async function cmdRemove(flags) {
   if (!flags.flagJson) banner();
 
   const skills = listSkills(CWD);
-  const installed = skills.filter((s) => s.installedClaude || s.installedCursor);
+  const installed = skills.filter((s) => {
+    if (s.installedClaude) return true;
+    for (const p of PLATFORMS) {
+      if (p.type === "claude-commands") continue;
+      if (s["installed_" + p.key]) return true;
+    }
+    return false;
+  });
 
   if (installed.length === 0) {
     if (flags.flagJson) {
@@ -456,10 +534,13 @@ function printHelp() {
   console.log("    update    Re-copy installed skills (pick up new versions)");
   console.log("    remove    Uninstall selected skills");
   console.log("");
+  console.log("  Platform flags:");
+  for (const p of PLATFORMS) {
+    console.log(`    --${p.flag.padEnd(16)} Target ${p.name}`);
+  }
+  console.log("");
   console.log("  Options:");
   console.log("    --all                Install/remove all skills");
-  console.log("    --claude             Target Claude Code only");
-  console.log("    --cursor             Target Cursor only");
   console.log("    --no-guardrails      Skip guardrail files");
   console.log("    --category <name>    Filter by category (repeatable)");
   console.log("    --dry-run            Preview without writing/deleting files");

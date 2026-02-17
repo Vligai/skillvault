@@ -8,6 +8,7 @@ const os = require("os");
 
 const {
   SKILLS,
+  PLATFORMS,
   PKG_ROOT,
   skillSourcePath,
   commandSourcePath,
@@ -19,6 +20,8 @@ const {
   writeConfig,
   installClaude,
   installCursor,
+  installRulesDir,
+  installPlatform,
 } = require("../lib/installer");
 
 let tmpDir;
@@ -48,6 +51,38 @@ describe("SKILLS registry", () => {
       assert.ok(fs.existsSync(skillSourcePath(skill)), `missing skill file: ${skill.file}`);
       assert.ok(fs.existsSync(commandSourcePath(skill)), `missing command file: ${skill.command}`);
     }
+  });
+});
+
+describe("PLATFORMS registry", () => {
+  it("contains 14 platforms", () => {
+    assert.equal(PLATFORMS.length, 14);
+  });
+
+  it("all platforms have required fields", () => {
+    for (const p of PLATFORMS) {
+      assert.ok(p.key, "missing key");
+      assert.ok(p.name, "missing name");
+      assert.ok(p.flag, "missing flag");
+      assert.ok(Array.isArray(p.detect), "detect must be array");
+      assert.ok(p.type, "missing type");
+    }
+  });
+
+  it("all guardrail source files exist on disk", () => {
+    for (const p of PLATFORMS) {
+      if (p.guardrailsSource) {
+        const src = path.join(PKG_ROOT, p.guardrailsSource);
+        assert.ok(fs.existsSync(src), `missing guardrails source: ${p.guardrailsSource}`);
+      }
+    }
+  });
+
+  it("has unique keys and flags", () => {
+    const keys = PLATFORMS.map((p) => p.key);
+    assert.equal(new Set(keys).size, keys.length, "duplicate keys");
+    const flags = PLATFORMS.map((p) => p.flag);
+    assert.equal(new Set(flags).size, flags.length, "duplicate flags");
   });
 });
 
@@ -128,25 +163,160 @@ describe("installCursor", () => {
   });
 });
 
+describe("installRulesDir", () => {
+  it("installs skills to windsurf rules dir", () => {
+    const platform = PLATFORMS.find((p) => p.key === "windsurf");
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    // 10 skills + 1 guardrail
+    assert.equal(copied.length, 11);
+
+    const rulesDir = path.join(tmpDir, ".windsurf", "rules");
+    for (const skill of SKILLS) {
+      assert.ok(fs.existsSync(path.join(rulesDir, skill.file)), `missing: ${skill.file}`);
+    }
+    assert.ok(fs.existsSync(path.join(rulesDir, "security-guardrails.md")));
+  });
+
+  it("installs skills to cline rules dir", () => {
+    const platform = PLATFORMS.find((p) => p.key === "cline");
+    const copied = installRulesDir(platform, SKILLS, false, tmpDir);
+    assert.equal(copied.length, 10);
+
+    const rulesDir = path.join(tmpDir, ".cline", "rules");
+    for (const skill of SKILLS) {
+      assert.ok(fs.existsSync(path.join(rulesDir, skill.file)), `missing: ${skill.file}`);
+    }
+  });
+
+  it("installs skills to jetbrains guidelines dir", () => {
+    const platform = PLATFORMS.find((p) => p.key === "jetbrains");
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    assert.equal(copied.length, 11);
+
+    const dir = path.join(tmpDir, ".junie", "guidelines");
+    assert.ok(fs.existsSync(path.join(dir, "security-guardrails.md")));
+  });
+
+  it("handles append-to-file pattern for copilot", () => {
+    const platform = PLATFORMS.find((p) => p.key === "copilot");
+    // Create existing copilot instructions file
+    const instrDir = path.join(tmpDir, ".github");
+    fs.mkdirSync(instrDir, { recursive: true });
+    fs.writeFileSync(path.join(instrDir, "copilot-instructions.md"), "# My Instructions\n");
+
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    // 10 skills + 1 appended guardrails
+    assert.equal(copied.length, 11);
+    assert.ok(copied.some((f) => f.includes("appended guardrails")));
+
+    const content = fs.readFileSync(path.join(instrDir, "copilot-instructions.md"), "utf8");
+    assert.ok(content.includes("# My Instructions"), "original preserved");
+    assert.ok(content.includes("# Security Skills for GitHub Copilot"), "guardrails appended");
+  });
+
+  it("handles append-to-file for codex when AGENTS.md does not exist", () => {
+    const platform = PLATFORMS.find((p) => p.key === "codex");
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    // 10 skills + 1 new AGENTS.md
+    assert.equal(copied.length, 11);
+    assert.ok(copied.some((f) => f === "AGENTS.md"));
+
+    assert.ok(fs.existsSync(path.join(tmpDir, "AGENTS.md")));
+  });
+
+  it("skips append when guardrails already present in append target", () => {
+    const platform = PLATFORMS.find((p) => p.key === "codex");
+    fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# Security Skills for Codex CLI\n\nExisting.\n");
+
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    assert.ok(copied.some((f) => f.includes("guardrails already present")));
+  });
+
+  it("dry run returns paths without creating files", () => {
+    const platform = PLATFORMS.find((p) => p.key === "windsurf");
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir, true);
+    assert.ok(copied.length > 0);
+
+    const rulesDir = path.join(tmpDir, ".windsurf", "rules");
+    assert.ok(!fs.existsSync(rulesDir), "rules dir should not exist");
+  });
+});
+
+describe("installPlatform", () => {
+  it("dispatches to installClaude for claude key", () => {
+    const copied = installPlatform("claude", SKILLS, false, tmpDir);
+    assert.equal(copied.length, 10);
+    assert.ok(copied[0].includes(".claude/commands/"));
+  });
+
+  it("dispatches to installRulesDir for windsurf key", () => {
+    const copied = installPlatform("windsurf", SKILLS, false, tmpDir);
+    assert.equal(copied.length, 10);
+    assert.ok(copied[0].includes(".windsurf/rules/"));
+  });
+
+  it("throws for unknown platform", () => {
+    assert.throws(() => installPlatform("unknown", SKILLS, false, tmpDir), /Unknown platform/);
+  });
+});
+
 describe("detectPlatforms", () => {
   it("detects .claude directory", () => {
     fs.mkdirSync(path.join(tmpDir, ".claude"), { recursive: true });
     const result = detectPlatforms(tmpDir);
-    assert.equal(result.hasClaude, true);
-    assert.equal(result.hasCursor, false);
+    assert.equal(result.claude, true);
+    assert.equal(result.cursor, false);
   });
 
   it("detects .cursor directory", () => {
     fs.mkdirSync(path.join(tmpDir, ".cursor"), { recursive: true });
     const result = detectPlatforms(tmpDir);
-    assert.equal(result.hasClaude, false);
-    assert.equal(result.hasCursor, true);
+    assert.equal(result.claude, false);
+    assert.equal(result.cursor, true);
   });
 
   it("detects neither when empty", () => {
     const result = detectPlatforms(tmpDir);
-    assert.equal(result.hasClaude, false);
-    assert.equal(result.hasCursor, false);
+    for (const p of PLATFORMS) {
+      assert.equal(result[p.key], false, `${p.key} should not be detected`);
+    }
+  });
+
+  it("detects windsurf directory", () => {
+    fs.mkdirSync(path.join(tmpDir, ".windsurf"), { recursive: true });
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.windsurf, true);
+  });
+
+  it("detects copilot instructions file", () => {
+    fs.mkdirSync(path.join(tmpDir, ".github"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, ".github", "copilot-instructions.md"), "");
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.copilot, true);
+  });
+
+  it("detects AGENTS.md for codex", () => {
+    fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "");
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.codex, true);
+  });
+
+  it("detects .aider.conf.yml for aider", () => {
+    fs.writeFileSync(path.join(tmpDir, ".aider.conf.yml"), "");
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.aider, true);
+  });
+
+  it("detects augment-guidelines.md for augment", () => {
+    fs.writeFileSync(path.join(tmpDir, "augment-guidelines.md"), "");
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.augment, true);
+  });
+
+  it("detects .junie for jetbrains", () => {
+    fs.mkdirSync(path.join(tmpDir, ".junie"), { recursive: true });
+    const result = detectPlatforms(tmpDir);
+    assert.equal(result.jetbrains, true);
   });
 });
 
@@ -224,6 +394,15 @@ describe("listSkills", () => {
     assert.equal(installed.length, 3);
     assert.equal(notInstalled.length, 7);
   });
+
+  it("shows installed_windsurf after installPlatform windsurf", () => {
+    installPlatform("windsurf", SKILLS, false, tmpDir);
+    const result = listSkills(tmpDir);
+    for (const s of result) {
+      assert.equal(s.installed_windsurf, true);
+      assert.equal(s.installedClaude, false);
+    }
+  });
 });
 
 describe("removeSkills", () => {
@@ -249,6 +428,17 @@ describe("removeSkills", () => {
     const skill = SKILLS[0];
     const dest = path.join(tmpDir, ".cursor", "rules", skill.file);
     assert.ok(!fs.existsSync(dest), `${skill.file} should be deleted`);
+  });
+
+  it("removes skills from multiple platforms", () => {
+    installClaude(SKILLS.slice(0, 1), false, tmpDir);
+    installPlatform("windsurf", SKILLS.slice(0, 1), false, tmpDir);
+    const removed = removeSkills([SKILLS[0].slug], tmpDir);
+
+    // Should remove from both claude and windsurf
+    assert.equal(removed.length, 2);
+    assert.ok(removed.some((f) => f.includes(".claude/commands/")));
+    assert.ok(removed.some((f) => f.includes(".windsurf/rules/")));
   });
 
   it("skips non-installed skills silently", () => {
@@ -294,6 +484,41 @@ describe("readConfig / writeConfig", () => {
     const config = { skills: ["review", "fake-skill"] };
     fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
     assert.throws(() => readConfig(tmpDir), /unknown skill slug 'fake-skill'/);
+  });
+
+  it("accepts all platform keys", () => {
+    for (const p of PLATFORMS) {
+      const config = { platform: p.key };
+      fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+      const result = readConfig(tmpDir);
+      assert.equal(result.platform, p.key);
+    }
+  });
+
+  it("accepts legacy 'both' platform", () => {
+    const config = { platform: "both" };
+    fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+    const result = readConfig(tmpDir);
+    assert.equal(result.platform, "both");
+  });
+
+  it("accepts array of platform keys", () => {
+    const config = { platform: ["claude", "windsurf", "copilot"] };
+    fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+    const result = readConfig(tmpDir);
+    assert.deepEqual(result.platform, ["claude", "windsurf", "copilot"]);
+  });
+
+  it("throws on unknown platform in array", () => {
+    const config = { platform: ["claude", "fakePlatform"] };
+    fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+    assert.throws(() => readConfig(tmpDir), /unknown platform 'fakePlatform'/);
+  });
+
+  it("throws on invalid platform string", () => {
+    const config = { platform: "invalid" };
+    fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
+    assert.throws(() => readConfig(tmpDir), /platform must be one of/);
   });
 
   it("writeConfig round-trips through readConfig", () => {

@@ -19,7 +19,7 @@ The fastest way to add security skills to your project:
 npx skillvault init
 ```
 
-This will detect your platform (Claude Code or Cursor), let you pick which skills to install, and copy the files into your project.
+This will detect your platform (Claude Code, Cursor, Windsurf, Copilot, Cline, and 9 more), let you pick which skills to install, and copy the files into your project.
 
 ### Commands
 
@@ -36,6 +36,10 @@ npx skillvault remove     # Uninstall selected skills
 npx skillvault init --all              # Install everything, no prompts
 npx skillvault init --claude           # Target Claude Code only
 npx skillvault init --cursor           # Target Cursor only
+npx skillvault init --windsurf         # Target Windsurf only
+npx skillvault init --copilot          # Target GitHub Copilot only
+npx skillvault init --cline            # Target Cline only
+npx skillvault init --codex            # Target Codex CLI only
 npx skillvault init --no-guardrails    # Skip guardrail files
 npx skillvault init --category developer  # Filter by category (repeatable)
 npx skillvault init --dry-run          # Preview without writing files
@@ -75,6 +79,18 @@ cp skillvault/Claude.md your-project/CLAUDE.md
 |----------|------|------------|
 | **Claude** (Anthropic) | [Claude.md](Claude.md) | Add to Claude projects, custom instructions, or prompt library |
 | **Cursor** | [Cursor.md](Cursor.md) | Add to `.cursor/rules/`, `.cursorrules`, or adapt as a Cursor skill |
+| **Windsurf** | [Windsurf.md](Windsurf.md) | Place in `.windsurf/rules/` |
+| **GitHub Copilot** | [Copilot.md](Copilot.md) | Add to `.github/copilot-instructions.md` or `.github/copilot/skills/` |
+| **Cline** | [Cline.md](Cline.md) | Place in `.cline/rules/` |
+| **Roo Code** | [Roo.md](Roo.md) | Place in `.roo/rules/` |
+| **Continue** | [Continue.md](Continue.md) | Place in `.continue/rules/` |
+| **Codex CLI** | [Codex.md](Codex.md) | Append to `AGENTS.md` or place in `codex-skills/` |
+| **Amazon Q** | [AmazonQ.md](AmazonQ.md) | Place in `.q/rules/` |
+| **Sourcegraph Cody** | [Cody.md](Cody.md) | Place in `.cody/rules/` |
+| **JetBrains AI** | [JetBrains.md](JetBrains.md) | Place in `.junie/guidelines/` |
+| **Tabnine** | [Tabnine.md](Tabnine.md) | Place in `.tabnine/rules/` |
+| **Aider** | [Aider.md](Aider.md) | Place in `.aider/rules/` or reference in `.aider.conf.yml` |
+| **Augment Code** | [Augment.md](Augment.md) | Append to `augment-guidelines.md` or place in `augment-skills/` |
 
 ---
 
@@ -130,8 +146,11 @@ Tests run automatically on every push and PR via GitHub Actions across Node 18, 
 
 ```
 skillvault/
-├── Claude.md                  # General security guardrails (Claude)
-├── Cursor.md                  # General security guardrails (Cursor)
+├── Claude.md                  # Security guardrails (Claude)
+├── Cursor.md                  # Security guardrails (Cursor)
+├── Windsurf.md                # Security guardrails (Windsurf)
+├── Copilot.md                 # Security guardrails (GitHub Copilot)
+├── Cline.md, Roo.md, ...     # Security guardrails (12 more platforms)
 ├── bin/cli.js                 # CLI entry point
 ├── lib/installer.js           # Core install logic (testable)
 ├── test/cli.test.js           # Unit tests
@@ -154,27 +173,26 @@ See [ideation.md](ideation.md) for the full skill ideation map with 40+ planned 
 
 ### More Platforms
 
-SkillVault currently supports Claude Code and Cursor. Planned:
+SkillVault supports 14 platforms with auto-detection:
 
 | Platform | Config location | Status |
 |----------|----------------|--------|
 | **Claude Code** | `.claude/commands/` + `CLAUDE.md` | Shipped |
 | **Cursor** | `.cursor/rules/` | Shipped |
-| **Windsurf** | `.windsurfrules` | Planned |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | Planned |
-| **Cline** | `.clinerules` | Planned |
-| **Roo Code** | `.roo/rules/` | Planned |
-| **Continue** | `.continue/config.yaml` rules | Planned |
-| **Codex CLI** | `AGENTS.md` | Planned |
-| **Amazon Q Developer** | `.q/rules/` | Planned |
-| **Sourcegraph Cody** | `.cody/cody.json` instructions | Planned |
-| **JetBrains AI** | `.junie/guidelines.md` | Planned |
-| **Tabnine** | `.tabnine/` config | Planned |
-| **Aider** | `.aider.conf.yml` conventions | Planned |
-| **Augment Code** | `augment-guidelines.md` | Planned |
-| **Generic** | `.rules/` (flat markdown) | Planned |
+| **Windsurf** | `.windsurf/rules/` | Shipped |
+| **GitHub Copilot** | `.github/copilot/skills/` + `.github/copilot-instructions.md` | Shipped |
+| **Cline** | `.cline/rules/` | Shipped |
+| **Roo Code** | `.roo/rules/` | Shipped |
+| **Continue** | `.continue/rules/` | Shipped |
+| **Codex CLI** | `codex-skills/` + `AGENTS.md` | Shipped |
+| **Amazon Q Developer** | `.q/rules/` | Shipped |
+| **Sourcegraph Cody** | `.cody/rules/` | Shipped |
+| **JetBrains AI** | `.junie/guidelines/` | Shipped |
+| **Tabnine** | `.tabnine/rules/` | Shipped |
+| **Aider** | `.aider/rules/` | Shipped |
+| **Augment Code** | `augment-skills/` + `augment-guidelines.md` | Shipped |
 
-Auto-detection will expand — `skillvault init` will detect any of these and offer the right installer.
+Auto-detection is built in — `skillvault init` detects any of these and offers the right installer.
 
 ### CLI Improvements
 
