@@ -13,6 +13,8 @@ const {
   readConfig,
   writeConfig,
   installPlatform,
+  getVersion,
+  doctor,
 } = require("../lib/installer");
 
 const CWD = process.cwd();
@@ -27,8 +29,10 @@ function parseArgs(args) {
     flagDryRun: false,
     flagJson: false,
     flagSave: false,
+    flagVersion: false,
     categories: [],
     platforms: {}, // e.g. { claude: true, cursor: true }
+    unknownFlags: [],
   };
 
   // Initialize all platform flags to false
@@ -43,6 +47,11 @@ function parseArgs(args) {
   }
 
   const platformFlags = new Set(PLATFORMS.map((p) => `--${p.flag}`));
+  const knownFlags = new Set([
+    "--all", "--no-guardrails", "--dry-run", "--json", "--save",
+    "--category", "--version", "-v", "--help", "-h",
+    ...platformFlags,
+  ]);
 
   while (i < args.length) {
     const arg = args[i];
@@ -51,6 +60,7 @@ function parseArgs(args) {
     else if (arg === "--dry-run") result.flagDryRun = true;
     else if (arg === "--json") result.flagJson = true;
     else if (arg === "--save") result.flagSave = true;
+    else if (arg === "--version" || arg === "-v") result.flagVersion = true;
     else if (arg === "--category" && i + 1 < args.length) {
       i++;
       result.categories.push(args[i]);
@@ -58,6 +68,8 @@ function parseArgs(args) {
       const flag = arg.slice(2); // remove --
       const platform = PLATFORMS.find((p) => p.flag === flag);
       if (platform) result.platforms[platform.key] = true;
+    } else if (arg.startsWith("-") && !knownFlags.has(arg)) {
+      result.unknownFlags.push(arg);
     }
     i++;
   }
@@ -523,6 +535,43 @@ async function cmdRemove(flags) {
   printSummary(removed, flags, "Removed");
 }
 
+// ── Doctor ───────────────────────────────────────────────────────────────────
+
+async function cmdDoctor(flags) {
+  const result = doctor(CWD);
+
+  if (flags.flagJson) {
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  banner();
+  console.log(`  Version: ${result.version}\n`);
+
+  console.log("  Detected platforms:");
+  for (const platform of PLATFORMS) {
+    const info = result.platforms[platform.key];
+    const status = info.detected ? "yes" : "no";
+    const skills = info.skillCount > 0 ? `, ${info.skillCount} skills` : "";
+    const guard = info.guardrails ? ", guardrails installed" : "";
+    console.log(`    ${platform.name.padEnd(22)} ${status}${skills}${guard}`);
+  }
+  console.log("");
+
+  console.log(`  Config (.skillvaultrc): ${result.config ? "found" : "not found"}`);
+  if (result.config) {
+    if (result.config.skills) console.log(`    skills: ${result.config.skills.join(", ")}`);
+    if (result.config.platform) {
+      const p = Array.isArray(result.config.platform) ? result.config.platform.join(", ") : result.config.platform;
+      console.log(`    platform: ${p}`);
+    }
+  }
+  console.log("");
+
+  console.log(`  Total installed skills: ${result.totalInstalled}`);
+  console.log("");
+}
+
 // ── Help ────────────────────────────────────────────────────────────────────
 
 function printHelp() {
@@ -533,6 +582,7 @@ function printHelp() {
   console.log("    list      Show installed and available skills");
   console.log("    update    Re-copy installed skills (pick up new versions)");
   console.log("    remove    Uninstall selected skills");
+  console.log("    doctor    Show diagnostic overview");
   console.log("");
   console.log("  Platform flags:");
   for (const p of PLATFORMS) {
@@ -546,6 +596,7 @@ function printHelp() {
   console.log("    --dry-run            Preview without writing/deleting files");
   console.log("    --json               Machine-readable JSON output");
   console.log("    --save               Save selections to .skillvaultrc");
+  console.log("    --version, -v        Show version number");
   console.log("");
 }
 
@@ -555,9 +606,20 @@ async function main() {
   const args = process.argv.slice(2);
   const flags = parseArgs(args);
 
+  // Handle --version / -v early
+  if (flags.flagVersion) {
+    console.log(getVersion());
+    process.exit(0);
+  }
+
   if (!flags.command || flags.command === "help" || flags.command === "--help" || flags.command === "-h") {
     printHelp();
     process.exit(0);
+  }
+
+  // Warn about unknown flags
+  for (const flag of flags.unknownFlags) {
+    process.stderr.write(`  Warning: unknown flag '${flag}'\n`);
   }
 
   switch (flags.command) {
@@ -572,6 +634,9 @@ async function main() {
       break;
     case "remove":
       await cmdRemove(flags);
+      break;
+    case "doctor":
+      await cmdDoctor(flags);
       break;
     default:
       console.error(`  Unknown command: ${flags.command}. Run 'skillvault help' for usage.`);

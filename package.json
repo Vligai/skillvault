@@ -14,7 +14,7 @@
     "skills/",
     ".claude/commands/",
     "Claude.md",
-    "Cursor.md"
+    "guardrails.md"
   ],
   "keywords": [
     "security",
