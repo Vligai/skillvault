@@ -28,6 +28,8 @@ npx skillvault init       # Install skills (interactive)
 npx skillvault list       # Show installed and available skills
 npx skillvault update     # Re-copy installed skills (pick up new versions)
 npx skillvault remove     # Uninstall selected skills
+npx skillvault doctor     # Show diagnostic overview
+npx skillvault --version  # Print version number
 ```
 
 ### Options
@@ -47,6 +49,8 @@ npx skillvault init --json             # Machine-readable JSON output
 npx skillvault init --save             # Save selections to .skillvaultrc
 npx skillvault remove --all            # Remove all installed skills
 npx skillvault update --category security # Update only security skills
+npx skillvault doctor                  # Diagnostic overview
+npx skillvault doctor --json           # Machine-readable diagnostics
 ```
 
 ### `.skillvaultrc` config
@@ -206,6 +210,9 @@ Auto-detection is built in — `skillvault init` detects any of these and offers
 | `.skillvaultrc` config | Project-level config for reproducible installs | Shipped |
 | `--dry-run` | Preview without writing files | Shipped |
 | `--json` | Machine-readable output for CI/scripting | Shipped |
+| `--version` / `-v` | Print version number | Shipped |
+| `skillvault doctor` | Diagnostic overview (platforms, config, skills) | Shipped |
+| Unknown flag warnings | Warn on stderr for unrecognized flags | Shipped |
 
 ### Community & Ecosystem
 
