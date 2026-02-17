@@ -75,22 +75,26 @@ cp skillvault/Claude.md your-project/CLAUDE.md
 
 ## Security Guardrails
 
-| Platform | File | How to Use |
-|----------|------|------------|
-| **Claude** (Anthropic) | [Claude.md](Claude.md) | Add to Claude projects, custom instructions, or prompt library |
-| **Cursor** | [Cursor.md](Cursor.md) | Add to `.cursor/rules/`, `.cursorrules`, or adapt as a Cursor skill |
-| **Windsurf** | [Windsurf.md](Windsurf.md) | Place in `.windsurf/rules/` |
-| **GitHub Copilot** | [Copilot.md](Copilot.md) | Add to `.github/copilot-instructions.md` or `.github/copilot/skills/` |
-| **Cline** | [Cline.md](Cline.md) | Place in `.cline/rules/` |
-| **Roo Code** | [Roo.md](Roo.md) | Place in `.roo/rules/` |
-| **Continue** | [Continue.md](Continue.md) | Place in `.continue/rules/` |
-| **Codex CLI** | [Codex.md](Codex.md) | Append to `AGENTS.md` or place in `codex-skills/` |
-| **Amazon Q** | [AmazonQ.md](AmazonQ.md) | Place in `.q/rules/` |
-| **Sourcegraph Cody** | [Cody.md](Cody.md) | Place in `.cody/rules/` |
-| **JetBrains AI** | [JetBrains.md](JetBrains.md) | Place in `.junie/guidelines/` |
-| **Tabnine** | [Tabnine.md](Tabnine.md) | Place in `.tabnine/rules/` |
-| **Aider** | [Aider.md](Aider.md) | Place in `.aider/rules/` or reference in `.aider.conf.yml` |
-| **Augment Code** | [Augment.md](Augment.md) | Append to `augment-guidelines.md` or place in `augment-skills/` |
+All platforms share a single guardrail source ([guardrails.md](guardrails.md)). The CLI injects the platform name and copies it to the right location. Claude uses its own format ([Claude.md](Claude.md)) for `CLAUDE.md` append behavior.
+
+Run `npx skillvault init` to install guardrails automatically, or copy manually:
+
+| Platform | Target location |
+|----------|----------------|
+| **Claude** | Appended to `CLAUDE.md` |
+| **Cursor** | `.cursor/rules/security-guardrails.md` |
+| **Windsurf** | `.windsurf/rules/security-guardrails.md` |
+| **GitHub Copilot** | Appended to `.github/copilot-instructions.md` |
+| **Cline** | `.cline/rules/security-guardrails.md` |
+| **Roo Code** | `.roo/rules/security-guardrails.md` |
+| **Continue** | `.continue/rules/security-guardrails.md` |
+| **Codex CLI** | Appended to `AGENTS.md` |
+| **Amazon Q** | `.q/rules/security-guardrails.md` |
+| **Sourcegraph Cody** | `.cody/rules/security-guardrails.md` |
+| **JetBrains AI** | `.junie/guidelines/security-guardrails.md` |
+| **Tabnine** | `.tabnine/rules/security-guardrails.md` |
+| **Aider** | `.aider/rules/security-guardrails.md` |
+| **Augment Code** | Appended to `augment-guidelines.md` |
 
 ---
 
@@ -146,11 +150,8 @@ Tests run automatically on every push and PR via GitHub Actions across Node 18, 
 
 ```
 skillvault/
-├── Claude.md                  # Security guardrails (Claude)
-├── Cursor.md                  # Security guardrails (Cursor)
-├── Windsurf.md                # Security guardrails (Windsurf)
-├── Copilot.md                 # Security guardrails (GitHub Copilot)
-├── Cline.md, Roo.md, ...     # Security guardrails (12 more platforms)
+├── guardrails.md              # Single guardrail template (all platforms)
+├── Claude.md                  # Claude-specific guardrails (CLAUDE.md append)
 ├── bin/cli.js                 # CLI entry point
 ├── lib/installer.js           # Core install logic (testable)
 ├── test/cli.test.js           # Unit tests

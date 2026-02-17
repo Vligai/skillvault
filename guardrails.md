@@ -1,13 +1,4 @@
----
-name: security-skills
-description: Enforce secure coding practices, prevent common vulnerabilities, and apply security review checklists. Use when writing, refactoring, or reviewing code, handling user input, auth, secrets, or dependencies.
----
-
-# Security Skills for Cline
-
 Apply these rules when generating, editing, or reviewing code. Security is a first-class constraint on all suggestions.
-
-*Content aligned with [Claude.md](Claude.md); tailored for Cline rules format.*
 
 ---
 
@@ -122,7 +113,3 @@ Apply these rules when generating, editing, or reviewing code. Security is a fir
 - String concatenation for SQL/commands with user input
 - Weak crypto (MD5, DES, ECB)
 - Debug/profiling enabled in production
-
----
-
-*Place in `.cline/rules/` for project-wide use.*

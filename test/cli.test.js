@@ -12,6 +12,7 @@ const {
   PKG_ROOT,
   skillSourcePath,
   commandSourcePath,
+  guardrailsContent,
   detectPlatforms,
   filterByCategory,
   listSkills,
@@ -69,20 +70,38 @@ describe("PLATFORMS registry", () => {
     }
   });
 
-  it("all guardrail source files exist on disk", () => {
-    for (const p of PLATFORMS) {
-      if (p.guardrailsSource) {
-        const src = path.join(PKG_ROOT, p.guardrailsSource);
-        assert.ok(fs.existsSync(src), `missing guardrails source: ${p.guardrailsSource}`);
-      }
-    }
-  });
-
   it("has unique keys and flags", () => {
     const keys = PLATFORMS.map((p) => p.key);
     assert.equal(new Set(keys).size, keys.length, "duplicate keys");
     const flags = PLATFORMS.map((p) => p.flag);
     assert.equal(new Set(flags).size, flags.length, "duplicate flags");
+  });
+});
+
+describe("guardrailsContent", () => {
+  it("guardrails.md source file exists", () => {
+    assert.ok(fs.existsSync(path.join(PKG_ROOT, "guardrails.md")));
+  });
+
+  it("injects platform name into header", () => {
+    const content = guardrailsContent("Cursor");
+    assert.ok(content.startsWith("# Security Skills for Cursor\n"));
+  });
+
+  it("contains core guardrail sections", () => {
+    const content = guardrailsContent("TestPlatform");
+    assert.ok(content.includes("## Principles"));
+    assert.ok(content.includes("## OWASP Top 10 Checklist"));
+    assert.ok(content.includes("## Never Generate"));
+  });
+
+  it("generates different headers for different platforms", () => {
+    const a = guardrailsContent("Windsurf");
+    const b = guardrailsContent("Cline");
+    assert.ok(a.includes("# Security Skills for Windsurf"));
+    assert.ok(b.includes("# Security Skills for Cline"));
+    // Body content should be identical after the header
+    assert.equal(a.replace("Windsurf", "X"), b.replace("Cline", "X"));
   });
 });
 
@@ -159,22 +178,25 @@ describe("installCursor", () => {
     for (const skill of SKILLS) {
       assert.ok(fs.existsSync(path.join(rulesDir, skill.file)), `missing: ${skill.file}`);
     }
-    assert.ok(fs.existsSync(path.join(rulesDir, "security-guardrails.md")));
+    const guardrailFile = path.join(rulesDir, "security-guardrails.md");
+    assert.ok(fs.existsSync(guardrailFile));
+    const content = fs.readFileSync(guardrailFile, "utf8");
+    assert.ok(content.includes("# Security Skills for Cursor"));
   });
 });
 
 describe("installRulesDir", () => {
-  it("installs skills to windsurf rules dir", () => {
+  it("installs skills to windsurf rules dir with templated guardrails", () => {
     const platform = PLATFORMS.find((p) => p.key === "windsurf");
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    // 10 skills + 1 guardrail
     assert.equal(copied.length, 11);
 
     const rulesDir = path.join(tmpDir, ".windsurf", "rules");
     for (const skill of SKILLS) {
       assert.ok(fs.existsSync(path.join(rulesDir, skill.file)), `missing: ${skill.file}`);
     }
-    assert.ok(fs.existsSync(path.join(rulesDir, "security-guardrails.md")));
+    const content = fs.readFileSync(path.join(rulesDir, "security-guardrails.md"), "utf8");
+    assert.ok(content.includes("# Security Skills for Windsurf"));
   });
 
   it("installs skills to cline rules dir", () => {
@@ -193,19 +215,19 @@ describe("installRulesDir", () => {
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
     assert.equal(copied.length, 11);
 
-    const dir = path.join(tmpDir, ".junie", "guidelines");
-    assert.ok(fs.existsSync(path.join(dir, "security-guardrails.md")));
+    const content = fs.readFileSync(
+      path.join(tmpDir, ".junie", "guidelines", "security-guardrails.md"), "utf8"
+    );
+    assert.ok(content.includes("# Security Skills for JetBrains AI"));
   });
 
   it("handles append-to-file pattern for copilot", () => {
     const platform = PLATFORMS.find((p) => p.key === "copilot");
-    // Create existing copilot instructions file
     const instrDir = path.join(tmpDir, ".github");
     fs.mkdirSync(instrDir, { recursive: true });
     fs.writeFileSync(path.join(instrDir, "copilot-instructions.md"), "# My Instructions\n");
 
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    // 10 skills + 1 appended guardrails
     assert.equal(copied.length, 11);
     assert.ok(copied.some((f) => f.includes("appended guardrails")));
 
@@ -217,11 +239,11 @@ describe("installRulesDir", () => {
   it("handles append-to-file for codex when AGENTS.md does not exist", () => {
     const platform = PLATFORMS.find((p) => p.key === "codex");
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    // 10 skills + 1 new AGENTS.md
     assert.equal(copied.length, 11);
     assert.ok(copied.some((f) => f === "AGENTS.md"));
 
-    assert.ok(fs.existsSync(path.join(tmpDir, "AGENTS.md")));
+    const content = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf8");
+    assert.ok(content.includes("# Security Skills for Codex CLI"));
   });
 
   it("skips append when guardrails already present in append target", () => {
@@ -334,8 +356,6 @@ describe("file content integrity", () => {
   });
 });
 
-// ── New tests ────────────────────────────────────────────────────────────────
-
 describe("filterByCategory", () => {
   it("returns all skills when categories is empty", () => {
     const result = filterByCategory(SKILLS, []);
@@ -358,7 +378,7 @@ describe("filterByCategory", () => {
 
   it("returns union for multiple categories", () => {
     const result = filterByCategory(SKILLS, ["developer", "security"]);
-    assert.equal(result.length, 8); // 5 developer + 3 security
+    assert.equal(result.length, 8);
     for (const s of result) {
       assert.ok(["developer", "security"].includes(s.category));
     }
@@ -435,7 +455,6 @@ describe("removeSkills", () => {
     installPlatform("windsurf", SKILLS.slice(0, 1), false, tmpDir);
     const removed = removeSkills([SKILLS[0].slug], tmpDir);
 
-    // Should remove from both claude and windsurf
     assert.equal(removed.length, 2);
     assert.ok(removed.some((f) => f.includes(".claude/commands/")));
     assert.ok(removed.some((f) => f.includes(".windsurf/rules/")));
@@ -452,7 +471,6 @@ describe("removeSkills", () => {
     const removed = removeSkills(slugs, tmpDir, true);
 
     assert.equal(removed.length, 1);
-    // File should still exist
     const skill = SKILLS[0];
     const dest = path.join(tmpDir, ".claude", "commands", skill.command);
     assert.ok(fs.existsSync(dest), "file should still exist after dry run");
@@ -537,7 +555,6 @@ describe("installClaude dryRun", () => {
     const copied = installClaude(SKILLS, false, tmpDir, true);
     assert.equal(copied.length, 10);
 
-    // No files should exist
     const commandsDir = path.join(tmpDir, ".claude", "commands");
     assert.ok(!fs.existsSync(commandsDir), "commands dir should not exist");
   });
@@ -545,7 +562,6 @@ describe("installClaude dryRun", () => {
   it("returns guardrail path in dry-run mode", () => {
     const copied = installClaude(SKILLS, true, tmpDir, true);
     assert.ok(copied.some((f) => f.includes("CLAUDE.md")), "should include CLAUDE.md path");
-    // CLAUDE.md should not exist
     assert.ok(!fs.existsSync(path.join(tmpDir, "CLAUDE.md")), "CLAUDE.md should not exist");
   });
 });
