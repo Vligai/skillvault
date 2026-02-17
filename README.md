@@ -1,6 +1,6 @@
 # SkillVault
 
-[![CI](https://github.com/vlad-terin/skillvault/actions/workflows/ci.yml/badge.svg)](https://github.com/vlad-terin/skillvault/actions/workflows/ci.yml)
+[![CI](https://github.com/Vligai/skillvault/actions/workflows/ci.yml/badge.svg)](https://github.com/Vligai/skillvault/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node 18+](https://img.shields.io/badge/node-18+-blue.svg)](https://nodejs.org/)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](package.json)
@@ -62,7 +62,7 @@ Save your selections with `--save` so `skillvault init` is reproducible across t
 Clone the repo and copy the files you need:
 
 ```bash
-git clone https://github.com/vlad-terin/skillvault.git
+git clone https://github.com/Vligai/skillvault.git
 cp -r skillvault/.claude/commands/ your-project/.claude/commands/
 cp skillvault/Claude.md your-project/CLAUDE.md
 ```
