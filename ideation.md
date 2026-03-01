@@ -160,6 +160,19 @@ Ranked by frequency x impact x automation potential x persona reach x gap in exi
 | 9 | **Phishing Email Analyzer** | Regular User | [skills/claude/user/phishing-email-analyzer.md](skills/claude/user/phishing-email-analyzer.md) |
 | 10 | **Hardening Checklist Generator** | Security, Cloud/Infra | [skills/claude/security/hardening-checklist-generator.md](skills/claude/security/hardening-checklist-generator.md) |
 
+## Phase 2 Skills (Shipped)
+
+| # | Skill | Persona(s) | File |
+|---|-------|-----------|------|
+| 11 | **Auth Flow Scaffolder** | Developer | [skills/claude/developer/auth-flow-scaffolder.md](skills/claude/developer/auth-flow-scaffolder.md) |
+| 12 | **Dockerfile Security Linter** | Developer, Security | [skills/claude/developer/dockerfile-security-linter.md](skills/claude/developer/dockerfile-security-linter.md) |
+| 13 | **Detection Rule Generator** | Security | [skills/claude/security/detection-rule-generator.md](skills/claude/security/detection-rule-generator.md) |
+| 14 | **IaC Scanner** | Developer, Security, Cloud/Infra | [skills/claude/cloud/iac-scanner.md](skills/claude/cloud/iac-scanner.md) |
+| 15 | **SBOM Generator** | Developer, Security | [skills/claude/developer/sbom-generator.md](skills/claude/developer/sbom-generator.md) |
+| 16 | **CVE Analyzer** | Security, Developer | [skills/claude/security/cve-analyzer.md](skills/claude/security/cve-analyzer.md) |
+| 17 | **Secure API Design Reviewer** | Developer, Security | [skills/claude/developer/secure-api-design-reviewer.md](skills/claude/developer/secure-api-design-reviewer.md) |
+| 18 | **PR Security Review Checklist** | Team Lead, Developer, Security | [skills/claude/team/pr-security-checklist.md](skills/claude/team/pr-security-checklist.md) |
+
 ---
 
 ## Next Steps
@@ -167,5 +180,7 @@ Ranked by frequency x impact x automation potential x persona reach x gap in exi
 - [x] Prioritize top 10 skills across personas
 - [x] Define input/output format for each skill (what does the user provide, what does the agent return?)
 - [x] Build prototype prompts for highest-priority skills
+- [x] Implement Phase 2 skills (Auth Flow Scaffolder, Dockerfile Linter, Detection Rules, IaC Scanner, SBOM Generator, CVE Analyzer, API Design Reviewer, PR Checklist)
 - [ ] Test against real-world scenarios and edge cases
 - [ ] Package as reusable Claude.md instructions or project-level skill files
+- [ ] Implement Phase 3 skills (Attack Surface Mapper, Network Security Reviewer, Cloud Misconfiguration Scanner, Log Analysis Assistant, Policy & Compliance Drafter)

@@ -38,8 +38,8 @@ afterEach(() => {
 });
 
 describe("SKILLS registry", () => {
-  it("contains 10 skills with required fields", () => {
-    assert.equal(SKILLS.length, 10);
+  it("contains 18 skills with required fields", () => {
+    assert.equal(SKILLS.length, 18);
     for (const skill of SKILLS) {
       assert.ok(skill.name, "missing name");
       assert.ok(skill.slug, "missing slug");
@@ -110,7 +110,7 @@ describe("guardrailsContent", () => {
 describe("installClaude", () => {
   it("copies all command files", () => {
     const copied = installClaude(SKILLS, false, tmpDir);
-    assert.equal(copied.length, 10);
+    assert.equal(copied.length, 18);
 
     const commandsDir = path.join(tmpDir, ".claude", "commands");
     for (const skill of SKILLS) {
@@ -173,8 +173,8 @@ describe("installClaude", () => {
 describe("installCursor", () => {
   it("copies all skill files and guardrails", () => {
     const copied = installCursor(SKILLS, true, tmpDir);
-    // 10 skills + 1 guardrail
-    assert.equal(copied.length, 11);
+    // 18 skills + 1 guardrail
+    assert.equal(copied.length, 19);
 
     const rulesDir = path.join(tmpDir, ".cursor", "rules");
     for (const skill of SKILLS) {
@@ -191,7 +191,7 @@ describe("installRulesDir", () => {
   it("installs skills to windsurf rules dir with templated guardrails", () => {
     const platform = PLATFORMS.find((p) => p.key === "windsurf");
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    assert.equal(copied.length, 11);
+    assert.equal(copied.length, 19);
 
     const rulesDir = path.join(tmpDir, ".windsurf", "rules");
     for (const skill of SKILLS) {
@@ -204,7 +204,7 @@ describe("installRulesDir", () => {
   it("installs skills to cline rules dir", () => {
     const platform = PLATFORMS.find((p) => p.key === "cline");
     const copied = installRulesDir(platform, SKILLS, false, tmpDir);
-    assert.equal(copied.length, 10);
+    assert.equal(copied.length, 18);
 
     const rulesDir = path.join(tmpDir, ".cline", "rules");
     for (const skill of SKILLS) {
@@ -215,7 +215,7 @@ describe("installRulesDir", () => {
   it("installs skills to jetbrains guidelines dir", () => {
     const platform = PLATFORMS.find((p) => p.key === "jetbrains");
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    assert.equal(copied.length, 11);
+    assert.equal(copied.length, 19);
 
     const content = fs.readFileSync(
       path.join(tmpDir, ".junie", "guidelines", "security-guardrails.md"), "utf8"
@@ -230,7 +230,7 @@ describe("installRulesDir", () => {
     fs.writeFileSync(path.join(instrDir, "copilot-instructions.md"), "# My Instructions\n");
 
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    assert.equal(copied.length, 11);
+    assert.equal(copied.length, 19);
     assert.ok(copied.some((f) => f.includes("appended guardrails")));
 
     const content = fs.readFileSync(path.join(instrDir, "copilot-instructions.md"), "utf8");
@@ -241,7 +241,7 @@ describe("installRulesDir", () => {
   it("handles append-to-file for codex when AGENTS.md does not exist", () => {
     const platform = PLATFORMS.find((p) => p.key === "codex");
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    assert.equal(copied.length, 11);
+    assert.equal(copied.length, 19);
     assert.ok(copied.some((f) => f === "AGENTS.md"));
 
     const content = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf8");
@@ -269,13 +269,13 @@ describe("installRulesDir", () => {
 describe("installPlatform", () => {
   it("dispatches to installClaude for claude key", () => {
     const copied = installPlatform("claude", SKILLS, false, tmpDir);
-    assert.equal(copied.length, 10);
+    assert.equal(copied.length, 18);
     assert.ok(copied[0].includes(".claude/commands/"));
   });
 
   it("dispatches to installRulesDir for windsurf key", () => {
     const copied = installPlatform("windsurf", SKILLS, false, tmpDir);
-    assert.equal(copied.length, 10);
+    assert.equal(copied.length, 18);
     assert.ok(copied[0].includes(".windsurf/rules/"));
   });
 
@@ -370,7 +370,7 @@ describe("filterByCategory", () => {
     for (const s of result) {
       assert.equal(s.category, "developer");
     }
-    assert.equal(result.length, 5);
+    assert.equal(result.length, 9);
   });
 
   it("returns empty array for unknown category", () => {
@@ -380,7 +380,7 @@ describe("filterByCategory", () => {
 
   it("returns union for multiple categories", () => {
     const result = filterByCategory(SKILLS, ["developer", "security"]);
-    assert.equal(result.length, 8);
+    assert.equal(result.length, 14);
     for (const s of result) {
       assert.ok(["developer", "security"].includes(s.category));
     }
@@ -390,7 +390,7 @@ describe("filterByCategory", () => {
 describe("listSkills", () => {
   it("shows all skills as not installed in empty dir", () => {
     const result = listSkills(tmpDir);
-    assert.equal(result.length, 10);
+    assert.equal(result.length, 18);
     for (const s of result) {
       assert.equal(s.installedClaude, false);
       assert.equal(s.installedCursor, false);
@@ -414,7 +414,7 @@ describe("listSkills", () => {
     const installed = result.filter((s) => s.installedClaude);
     const notInstalled = result.filter((s) => !s.installedClaude);
     assert.equal(installed.length, 3);
-    assert.equal(notInstalled.length, 7);
+    assert.equal(notInstalled.length, 15);
   });
 
   it("shows installed_windsurf after installPlatform windsurf", () => {
@@ -555,7 +555,7 @@ describe("readConfig / writeConfig", () => {
 describe("installClaude dryRun", () => {
   it("returns paths but creates no files", () => {
     const copied = installClaude(SKILLS, false, tmpDir, true);
-    assert.equal(copied.length, 10);
+    assert.equal(copied.length, 18);
 
     const commandsDir = path.join(tmpDir, ".claude", "commands");
     assert.ok(!fs.existsSync(commandsDir), "commands dir should not exist");
@@ -625,9 +625,9 @@ describe("doctor", () => {
     installPlatform("cursor", SKILLS.slice(0, 3), false, tmpDir);
 
     const result = doctor(tmpDir);
-    assert.equal(result.platforms.claude.skillCount, 10);
+    assert.equal(result.platforms.claude.skillCount, 18);
     assert.equal(result.platforms.cursor.skillCount, 3);
-    assert.equal(result.totalInstalled, 13);
+    assert.equal(result.totalInstalled, 21);
   });
 
   it("detects guardrails for claude", () => {
