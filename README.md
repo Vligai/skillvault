@@ -115,6 +115,10 @@ Specialized security skill prompts organized by persona. Each skill is a standal
 | **Dependency Auditor** | Audit dependency manifests for known vulnerabilities and suggest upgrades | [dependency-auditor.md](skills/claude/developer/dependency-auditor.md) |
 | **Input Validation Generator** | Generate validation schemas and sanitization logic for endpoints and forms | [input-validation-generator.md](skills/claude/developer/input-validation-generator.md) |
 | **CI/CD Security Hardener** | Review pipeline configs for secret leaks, injection risks, and excessive permissions | [cicd-security-hardener.md](skills/claude/developer/cicd-security-hardener.md) |
+| **Auth Flow Scaffolder** | Scaffold secure OAuth2, OIDC, JWT, and session-based authentication flows | [auth-flow-scaffolder.md](skills/claude/developer/auth-flow-scaffolder.md) |
+| **Dockerfile Security Linter** | Analyze Dockerfiles for root execution, unverified images, and secret leakage | [dockerfile-security-linter.md](skills/claude/developer/dockerfile-security-linter.md) |
+| **SBOM Generator** | Produce Software Bill of Materials in SPDX or CycloneDX format for compliance | [sbom-generator.md](skills/claude/developer/sbom-generator.md) |
+| **Secure API Design Reviewer** | Review OpenAPI specs for auth gaps, data exposure, and missing rate limiting | [secure-api-design-reviewer.md](skills/claude/developer/secure-api-design-reviewer.md) |
 
 ### Security Skills
 
@@ -123,12 +127,21 @@ Specialized security skill prompts organized by persona. Each skill is a standal
 | **Threat Model Generator** | Produce structured threat models (STRIDE) from architecture descriptions | [threat-model-generator.md](skills/claude/security/threat-model-generator.md) |
 | **Incident Response Playbook Builder** | Generate IR runbooks for specific incident scenarios | [incident-response-playbook-builder.md](skills/claude/security/incident-response-playbook-builder.md) |
 | **Hardening Checklist Generator** | Produce CIS-benchmark-style hardening checklists for OS/service/cloud configs | [hardening-checklist-generator.md](skills/claude/security/hardening-checklist-generator.md) |
+| **Detection Rule Generator** | Write SIEM detection rules in Sigma, Splunk SPL, and KQL from threat descriptions | [detection-rule-generator.md](skills/claude/security/detection-rule-generator.md) |
+| **CVE Analyzer** | Summarize CVEs, assess stack-specific impact, and provide prioritized remediation | [cve-analyzer.md](skills/claude/security/cve-analyzer.md) |
 
 ### Cloud / Infrastructure Skills
 
 | Skill | Description | File |
 |-------|-------------|------|
 | **IAM Policy Analyzer** | Review AWS/GCP/Azure IAM policies for over-permissive access | [iam-policy-analyzer.md](skills/claude/cloud/iam-policy-analyzer.md) |
+| **IaC Scanner** | Review Terraform and CloudFormation for public exposure, missing encryption, and IAM risks | [iac-scanner.md](skills/claude/cloud/iac-scanner.md) |
+
+### Team Lead Skills
+
+| Skill | Description | File |
+|-------|-------------|------|
+| **PR Security Review Checklist** | Generate security-focused PR review checklists tailored to the diff and change type | [pr-security-checklist.md](skills/claude/team/pr-security-checklist.md) |
 
 ### User Skills
 
@@ -164,10 +177,11 @@ skillvault/
 ├── README.md
 └── skills/
     └── claude/
-        ├── developer/         # Developer-focused skills
-        ├── security/          # Security professional skills
-        ├── cloud/             # Cloud/infrastructure skills
-        └── user/              # Non-technical user skills
+        ├── developer/         # Developer-focused skills (9 skills)
+        ├── security/          # Security professional skills (5 skills)
+        ├── cloud/             # Cloud/infrastructure skills (2 skills)
+        ├── team/              # Team lead / engineering manager skills (1 skill)
+        └── user/              # Non-technical user skills (1 skill)
 ```
 
 See [ideation.md](ideation.md) for the full skill ideation map with 40+ planned skills across 5 personas.
@@ -226,16 +240,22 @@ Auto-detection is built in — `skillvault init` detects any of these and offers
 
 ### Next Skills (from [ideation.md](ideation.md))
 
-| Skill | Persona | Priority |
-|-------|---------|----------|
-| Auth Flow Scaffolder | Developer | High |
-| Dockerfile Security Linter | Developer | High |
-| Detection Rule Generator (Sigma/SPL/KQL) | Security | High |
-| IaC Scanner (Terraform/CloudFormation) | Cloud | High |
-| SBOM Generator | Developer | Medium |
-| CVE Analyzer | Security | Medium |
-| Secure API Design Reviewer | Developer | Medium |
-| PR Security Review Checklist | Team Lead | Medium |
+| Skill | Persona | Priority | Status |
+|-------|---------|----------|--------|
+| Auth Flow Scaffolder | Developer | High | Shipped |
+| Dockerfile Security Linter | Developer | High | Shipped |
+| Detection Rule Generator (Sigma/SPL/KQL) | Security | High | Shipped |
+| IaC Scanner (Terraform/CloudFormation) | Cloud | High | Shipped |
+| SBOM Generator | Developer | Medium | Shipped |
+| CVE Analyzer | Security | Medium | Shipped |
+| Secure API Design Reviewer | Developer | Medium | Shipped |
+| PR Security Review Checklist | Team Lead | Medium | Shipped |
+| Attack Surface Mapper | Security | High | Planned |
+| Network Security Reviewer | Cloud | High | Planned |
+| Cloud Misconfiguration Scanner | Cloud | High | Planned |
+| Parameterized Query Converter | Developer | Medium | Planned |
+| Log Analysis Assistant | Security | Medium | Planned |
+| Policy & Compliance Drafter | Security | Medium | Planned |
 
 ---
 
