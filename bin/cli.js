@@ -162,7 +162,7 @@ async function cmdInit(flags) {
   }
 
   if (flags.flagJson) {
-    console.log(JSON.stringify({ installed: allCopied, dryRun: flags.flagDryRun }, null, 2));
+    console.log(JSON.stringify({ command: "init", files: allCopied, dryRun: flags.flagDryRun }, null, 2));
     return;
   }
 
@@ -192,7 +192,7 @@ async function cmdUpdate(flags) {
 
   if (installed.length === 0) {
     if (flags.flagJson) {
-      console.log(JSON.stringify({ updated: [], dryRun: flags.flagDryRun }, null, 2));
+      console.log(JSON.stringify({ command: "update", files: [], dryRun: flags.flagDryRun, summary: { updated: 0, unchanged: 0, skipped: 0 } }, null, 2));
     } else {
       console.log("  No installed skills found. Run 'skillvault init' first.\n");
     }
@@ -236,7 +236,13 @@ async function cmdUpdate(flags) {
   }
 
   if (flags.flagJson) {
-    console.log(JSON.stringify({ updated: allCopied, dryRun: flags.flagDryRun }, null, 2));
+    const skipped  = allCopied.filter((f) => f.includes("(modified — skipped)")).length;
+    const unchanged = allCopied.filter((f) => f.includes("already up to date")).length;
+    const updated  = allCopied.length - skipped - unchanged;
+    console.log(JSON.stringify({
+      command: "update", files: allCopied, dryRun: flags.flagDryRun,
+      summary: { updated, unchanged, skipped },
+    }, null, 2));
     return;
   }
 
@@ -258,7 +264,7 @@ async function cmdRemove(flags) {
 
   if (installed.length === 0) {
     if (flags.flagJson) {
-      console.log(JSON.stringify({ removed: [], dryRun: flags.flagDryRun }, null, 2));
+      console.log(JSON.stringify({ command: "remove", files: [], dryRun: flags.flagDryRun }, null, 2));
     } else {
       console.log("  No installed skills found.\n");
     }
@@ -293,7 +299,7 @@ async function cmdRemove(flags) {
   const removed = removeSkills(slugs, CWD, flags.flagDryRun);
 
   if (flags.flagJson) {
-    console.log(JSON.stringify({ removed, dryRun: flags.flagDryRun }, null, 2));
+    console.log(JSON.stringify({ command: "remove", files: removed, dryRun: flags.flagDryRun }, null, 2));
     return;
   }
 

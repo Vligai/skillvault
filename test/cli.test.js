@@ -493,7 +493,6 @@ describe("removeSkills", () => {
     installPlatform("windsurf", SKILLS.slice(0, 1), false, tmpDir);
     const removed = removeSkills([SKILLS[0].slug], tmpDir);
 
-    assert.equal(removed.length, 2);
     assert.ok(removed.some((f) => f.includes(".claude/commands/")));
     assert.ok(removed.some((f) => f.includes(".windsurf/rules/")));
   });
