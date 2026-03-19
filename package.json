@@ -6,15 +6,18 @@
     "skillvault": "bin/cli.js"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "generate-checksums": "node scripts/generate-checksums.js"
   },
   "files": [
     "bin/",
     "lib/",
     "skills/",
+    "scripts/",
     ".claude/commands/",
     "Claude.md",
-    "guardrails.md"
+    "docs/guardrails.md",
+    "checksums.json"
   ],
   "keywords": [
     "security",

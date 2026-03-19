@@ -30,6 +30,7 @@ function parseArgs(args) {
     flagJson: false,
     flagSave: false,
     flagVersion: false,
+    flagForce: false,
     categories: [],
     platforms: {}, // e.g. { claude: true, cursor: true }
     unknownFlags: [],
@@ -49,7 +50,7 @@ function parseArgs(args) {
   const platformFlags = new Set(PLATFORMS.map((p) => `--${p.flag}`));
   const knownFlags = new Set([
     "--all", "--no-guardrails", "--dry-run", "--json", "--save",
-    "--category", "--version", "-v", "--help", "-h",
+    "--category", "--version", "-v", "--help", "-h", "--force",
     ...platformFlags,
   ]);
 
@@ -61,6 +62,7 @@ function parseArgs(args) {
     else if (arg === "--json") result.flagJson = true;
     else if (arg === "--save") result.flagSave = true;
     else if (arg === "--version" || arg === "-v") result.flagVersion = true;
+    else if (arg === "--force") result.flagForce = true;
     else if (arg === "--category" && i + 1 < args.length) {
       i++;
       result.categories.push(args[i]);
@@ -509,6 +511,19 @@ async function cmdRemove(flags) {
 
   let toRemove;
   if (flags.flagAll) {
+    // Require explicit confirmation unless --force or non-interactive (e.g. CI)
+    if (!flags.flagForce && process.stdin.isTTY) {
+      const rl = createRL();
+      try {
+        const answer = await ask(rl, `  This will remove ${installed.length} installed skill(s). Are you sure? [y/N]: `);
+        if (answer.trim().toLowerCase() !== "y" && answer.trim().toLowerCase() !== "yes") {
+          console.log("  Aborted.\n");
+          return;
+        }
+      } finally {
+        rl.close();
+      }
+    }
     toRemove = installed;
   } else {
     const rl = createRL();
@@ -590,7 +605,8 @@ function printHelp() {
   }
   console.log("");
   console.log("  Options:");
-  console.log("    --all                Install/remove all skills");
+  console.log("    --all                Install/remove all skills
+    --force              Skip confirmation prompts (e.g. for remove --all in CI)");
   console.log("    --no-guardrails      Skip guardrail files");
   console.log("    --category <name>    Filter by category (repeatable)");
   console.log("    --dry-run            Preview without writing/deleting files");
