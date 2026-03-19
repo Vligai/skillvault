@@ -11,8 +11,11 @@ const {
   PLATFORMS,
   PKG_ROOT,
   CONFIG_VERSION,
+  GUARDRAILS_VERSION,
   getVersion,
   verifyChecksums,
+  getGuardrailsVersion,
+  replaceGuardrailsBlock,
   doctor,
   skillSourcePath,
   commandSourcePath,
@@ -89,7 +92,8 @@ describe("guardrailsContent", () => {
 
   it("injects platform name into header", () => {
     const content = guardrailsContent("Cursor");
-    assert.ok(content.startsWith("# Security Skills for Cursor\n"));
+    assert.ok(content.includes("# Security Skills for Cursor\n"));
+    assert.ok(content.startsWith("<!-- skillvault-guardrails:"), "should start with version tag");
   });
 
   it("contains core guardrail sections", () => {
@@ -140,19 +144,34 @@ describe("installClaude", () => {
     assert.ok(content.includes("# Security Skills for Claude"), "guardrails appended");
   });
 
-  it("skips append when guardrails already present", () => {
+  it("skips append when current-version guardrails already present", () => {
     const dest = path.join(tmpDir, "CLAUDE.md");
-    const original = "# Security Skills for Claude\n\nAlready here.\n";
-    fs.writeFileSync(dest, original);
+    // Write a file that already has the current version tag
+    const existing = `<!-- skillvault-guardrails:${GUARDRAILS_VERSION} -->\n# Security Skills for Claude\n\nAlready here.\n`;
+    fs.writeFileSync(dest, existing);
 
     const copied = installClaude(SKILLS, true, tmpDir);
 
     const content = fs.readFileSync(dest, "utf8");
-    assert.equal(content, original, "file should not be modified");
+    assert.equal(content, existing, "file should not be modified");
     assert.ok(
-      copied.some((f) => f.includes("guardrails already present")),
-      "should report guardrails already present"
+      copied.some((f) => f.includes("already up to date")),
+      "should report guardrails already up to date"
     );
+  });
+
+  it("replaces legacy (unversioned) guardrails in place", () => {
+    const dest = path.join(tmpDir, "CLAUDE.md");
+    // Old install without version tag
+    fs.writeFileSync(dest, "# My Project\n\n# Security Skills for Claude\n\nOld guardrails.\n");
+
+    const copied = installClaude(SKILLS, true, tmpDir);
+
+    const content = fs.readFileSync(dest, "utf8");
+    assert.ok(content.includes("# My Project"), "original header preserved");
+    assert.ok(content.includes(`<!-- skillvault-guardrails:${GUARDRAILS_VERSION} -->`), "version tag written");
+    assert.ok(!content.includes("Old guardrails."), "old guardrails replaced");
+    assert.ok(copied.some((f) => f.includes("updated to v")), "should report update");
   });
 
   it("installs only selected subset", () => {
@@ -250,12 +269,25 @@ describe("installRulesDir", () => {
     assert.ok(content.includes("# Security Skills for Codex CLI"));
   });
 
-  it("skips append when guardrails already present in append target", () => {
+  it("skips append when current-version guardrails already in append target", () => {
     const platform = PLATFORMS.find((p) => p.key === "codex");
-    fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# Security Skills for Codex CLI\n\nExisting.\n");
+    const existing = `<!-- skillvault-guardrails:${GUARDRAILS_VERSION} -->\n# Security Skills for Codex CLI\n\nExisting.\n`;
+    fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), existing);
 
     const copied = installRulesDir(platform, SKILLS, true, tmpDir);
-    assert.ok(copied.some((f) => f.includes("guardrails already present")));
+    assert.ok(copied.some((f) => f.includes("already up to date")));
+  });
+
+  it("replaces legacy (unversioned) guardrails in append target", () => {
+    const platform = PLATFORMS.find((p) => p.key === "codex");
+    fs.writeFileSync(path.join(tmpDir, "AGENTS.md"), "# My Agents\n\n# Security Skills for Codex CLI\n\nOld content.\n");
+
+    const copied = installRulesDir(platform, SKILLS, true, tmpDir);
+    const content = fs.readFileSync(path.join(tmpDir, "AGENTS.md"), "utf8");
+    assert.ok(content.includes("# My Agents"), "original header preserved");
+    assert.ok(content.includes(`<!-- skillvault-guardrails:${GUARDRAILS_VERSION} -->`), "version tag written");
+    assert.ok(!content.includes("Old content."), "old guardrails replaced");
+    assert.ok(copied.some((f) => f.includes("updated to v")));
   });
 
   it("dry run returns paths without creating files", () => {
@@ -602,6 +634,39 @@ describe(".skillvaultrc integration", () => {
     const config = { platform: "invalid" };
     fs.writeFileSync(path.join(tmpDir, ".skillvaultrc"), JSON.stringify(config));
     assert.throws(() => readConfig(tmpDir), /platform must be one of/);
+  });
+});
+
+describe("getGuardrailsVersion", () => {
+  it("returns GUARDRAILS_VERSION for current-version content", () => {
+    const content = `<!-- skillvault-guardrails:${GUARDRAILS_VERSION} -->\n# Security Skills for Test\n`;
+    assert.equal(getGuardrailsVersion(content), GUARDRAILS_VERSION);
+  });
+
+  it("returns 0 for legacy (unversioned) content", () => {
+    assert.equal(getGuardrailsVersion("# Security Skills for Cursor\n\nSome content."), 0);
+  });
+
+  it("returns null when guardrails are absent", () => {
+    assert.equal(getGuardrailsVersion("# My Project\n\nNo guardrails here."), null);
+  });
+});
+
+describe("replaceGuardrailsBlock", () => {
+  it("replaces versioned block at end of file", () => {
+    const original = "# Header\n\n<!-- skillvault-guardrails:0 -->\n# Security Skills for X\n\nOld.";
+    const result = replaceGuardrailsBlock(original, "NEW BLOCK");
+    assert.ok(result.includes("# Header"), "header preserved");
+    assert.ok(result.includes("NEW BLOCK"), "new block inserted");
+    assert.ok(!result.includes("Old."), "old block removed");
+  });
+
+  it("replaces legacy block without version tag", () => {
+    const original = "# Header\n\n# Security Skills for X\n\nOld.";
+    const result = replaceGuardrailsBlock(original, "NEW BLOCK");
+    assert.ok(result.includes("# Header"), "header preserved");
+    assert.ok(result.includes("NEW BLOCK"), "new block inserted");
+    assert.ok(!result.includes("Old."), "old block removed");
   });
 });
 

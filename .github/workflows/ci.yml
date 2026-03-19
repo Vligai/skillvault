@@ -8,10 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [18, 20, 22]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,5 +22,5 @@ jobs:
       - run: node bin/cli.js init --all --claude
       - run: node bin/cli.js list --json
       - run: node bin/cli.js update --dry-run
-      - run: node bin/cli.js remove --all
+      - run: node bin/cli.js remove --all --force
       - run: node bin/cli.js init --all --claude --category developer --dry-run --json

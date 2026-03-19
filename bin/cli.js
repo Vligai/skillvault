@@ -452,12 +452,13 @@ async function cmdUpdate(flags) {
 
   const allCopied = [];
 
-  // Determine which platforms to update
+  // Determine which platforms to update.
+  // Always pass includeGuardrails=true so stale guardrails are refreshed.
   if (hasPlatformFlags(flags)) {
     // Only update the platforms explicitly specified
     for (const platform of PLATFORMS) {
       if (flags.platforms[platform.key]) {
-        const files = installPlatform(platform.key, selectedSkills, false, CWD, flags.flagDryRun);
+        const files = installPlatform(platform.key, selectedSkills, !flags.flagNoGuardrails, CWD, flags.flagDryRun);
         allCopied.push(...files);
       }
     }
@@ -465,7 +466,7 @@ async function cmdUpdate(flags) {
     // Update all platforms where skills are installed
     const hasClaude = installed.some((s) => s.installedClaude);
     if (hasClaude) {
-      const files = installPlatform("claude", selectedSkills, false, CWD, flags.flagDryRun);
+      const files = installPlatform("claude", selectedSkills, !flags.flagNoGuardrails, CWD, flags.flagDryRun);
       allCopied.push(...files);
     }
 
@@ -473,7 +474,7 @@ async function cmdUpdate(flags) {
       if (platform.type === "claude-commands") continue;
       const hasSkills = installed.some((s) => s["installed_" + platform.key]);
       if (hasSkills) {
-        const files = installPlatform(platform.key, selectedSkills, false, CWD, flags.flagDryRun);
+        const files = installPlatform(platform.key, selectedSkills, !flags.flagNoGuardrails, CWD, flags.flagDryRun);
         allCopied.push(...files);
       }
     }
