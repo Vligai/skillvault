@@ -32,6 +32,8 @@ const {
   installPlatform,
 } = require("../lib/installer");
 
+const { parseArgs } = require("../lib/args");
+
 let tmpDir;
 
 beforeEach(() => {
@@ -784,5 +786,103 @@ describe("doctor", () => {
     assert.equal(result.platforms.claude.detected, true);
     assert.equal(result.platforms.cursor.detected, true);
     assert.equal(result.platforms.windsurf.detected, false);
+  });
+});
+
+// ── Medium priority: C6, U3, U4 ─────────────────────────────────────────────
+
+describe("C6 — modified file protection", () => {
+  it("skips a skill file that has been locally modified", () => {
+    // First install normally
+    installClaude([SKILLS[0]], false, tmpDir);
+
+    // Modify the installed file
+    const dest = path.join(tmpDir, ".claude", "commands", SKILLS[0].command);
+    fs.appendFileSync(dest, "\n<!-- locally modified -->");
+
+    // Re-install without --force: should skip
+    const copied = installClaude([SKILLS[0]], false, tmpDir);
+    assert.ok(copied.some((f) => f.includes("(modified — skipped)")), "should skip modified file");
+
+    // File should still have the modification
+    const content = fs.readFileSync(dest, "utf8");
+    assert.ok(content.includes("<!-- locally modified -->"), "modification should be preserved");
+  });
+
+  it("overwrites modified file when force=true", () => {
+    installClaude([SKILLS[0]], false, tmpDir);
+
+    const dest = path.join(tmpDir, ".claude", "commands", SKILLS[0].command);
+    fs.appendFileSync(dest, "\n<!-- locally modified -->");
+
+    // Re-install with force=true: should overwrite
+    const copied = installClaude([SKILLS[0]], false, tmpDir, false, true);
+    assert.ok(!copied.some((f) => f.includes("(modified — skipped)")), "should not skip with --force");
+
+    const content = fs.readFileSync(dest, "utf8");
+    assert.ok(!content.includes("<!-- locally modified -->"), "modification should be overwritten");
+  });
+
+  it("skips modified skill in rules-dir platform", () => {
+    const platform = PLATFORMS.find((p) => p.key === "cursor");
+    installRulesDir(platform, [SKILLS[0]], false, tmpDir);
+
+    const dest = path.join(tmpDir, ".cursor", "rules", SKILLS[0].file);
+    fs.appendFileSync(dest, "\n<!-- locally modified -->");
+
+    const copied = installRulesDir(platform, [SKILLS[0]], false, tmpDir);
+    assert.ok(copied.some((f) => f.includes("(modified — skipped)")));
+  });
+
+  it("does not warn when unmodified file already exists", () => {
+    // Install once, then install again without changes — no skip
+    installClaude([SKILLS[0]], false, tmpDir);
+    const copied = installClaude([SKILLS[0]], false, tmpDir);
+    assert.ok(!copied.some((f) => f.includes("(modified — skipped)")), "unmodified re-install should not skip");
+  });
+});
+
+describe("U3 — --platform comma-separated flag", () => {
+  it("sets single platform via --platform", () => {
+    const flags = parseArgs(["init", "--platform", "claude"]);
+    assert.equal(flags.platforms.claude, true);
+    assert.equal(flags.platforms.cursor, false);
+  });
+
+  it("sets multiple platforms via comma-separated --platform", () => {
+    const flags = parseArgs(["init", "--platform", "claude,cursor,windsurf"]);
+    assert.equal(flags.platforms.claude, true);
+    assert.equal(flags.platforms.cursor, true);
+    assert.equal(flags.platforms.windsurf, true);
+    assert.equal(flags.platforms.cline, false);
+  });
+
+  it("treats unknown platform key as unknown flag", () => {
+    const flags = parseArgs(["init", "--platform", "claude,fakeplatform"]);
+    assert.equal(flags.platforms.claude, true);
+    assert.ok(flags.unknownFlags.some((f) => f.includes("fakeplatform")));
+  });
+
+  it("--platform coexists with individual platform flags", () => {
+    const flags = parseArgs(["init", "--platform", "claude", "--cursor"]);
+    assert.equal(flags.platforms.claude, true);
+    assert.equal(flags.platforms.cursor, true);
+  });
+});
+
+describe("U4 — unknown flags collected for fatal handling", () => {
+  it("collects unknown flags", () => {
+    const flags = parseArgs(["init", "--typo-flag"]);
+    assert.ok(flags.unknownFlags.includes("--typo-flag"));
+  });
+
+  it("does not collect known flags as unknown", () => {
+    const flags = parseArgs(["init", "--all", "--dry-run", "--force"]);
+    assert.equal(flags.unknownFlags.length, 0);
+  });
+
+  it("does not collect platform flags as unknown", () => {
+    const flags = parseArgs(["init", "--claude", "--cursor"]);
+    assert.equal(flags.unknownFlags.length, 0);
   });
 });
